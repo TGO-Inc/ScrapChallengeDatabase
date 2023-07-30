@@ -1,0 +1,130 @@
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using SteamWorkshop.WebAPI.Internal;
+using SteamWorkshop.WebAPI.ISteamRemoteStorage;
+using System.Linq;
+using System.Text;
+
+namespace SteamWorkshop.WebAPI.IPublishedFileService
+{
+    public class PublishedFileService : SteamHTTP
+    {
+        internal readonly static string uGET_PUBLISHED_FILE_DETAILS
+            = "https://api.steampowered.com/ISteamRemoteStorage/GetPublishedFileDetails/v1/";
+        internal readonly static string uQUERY_FILES
+            = "https://api.steampowered.com/IPublishedFileService/QueryFiles/v1/";
+
+        public PublishedFileService(char[] key) : base(key)
+        {
+
+        }
+
+        private static T Request<T>(string query)
+        {
+            var Results = new HttpClient().GetAsync(query).GetAwaiter().GetResult();
+            var Json = Results.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            return JsonConvert.DeserializeObject<T>(Json[12..^1])!;
+        }
+        private static T Post<T>(string query, FormUrlEncodedContent content)
+        {
+            var Results = new HttpClient().PostAsync(query, content).GetAwaiter().GetResult();
+            var Json = Results.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            return JsonConvert.DeserializeObject<T>(Json[12..^1])!;
+        }
+
+        public ISteamRemoteStorage.PublishedFileDetailsQuery SendQuery(IPublishedFileServiceQuery query)
+        {
+            StringBuilder QueryString = new();
+
+            QueryString.Append(uQUERY_FILES);
+            QueryString.Append(RequestKey());
+
+            QueryString.Append("&query_type=");
+            QueryString.Append(query.QueryType);
+            QueryString.Append("&numperpage=");
+            QueryString.Append(query.ResultsPerPage);
+            QueryString.Append("&appid=");
+            QueryString.Append(query.AppId);
+            QueryString.Append("&requiredtags[0]=");
+            QueryString.Append(query.RequiredTags);
+            QueryString.Append("&cursor=");
+
+            Directory.CreateDirectory("challenges");
+            Console.WriteLine("Downloading challenge mode steam_ids...");
+
+            PublishedFileDetailsQuery Response = Request<PublishedFileDetailsQuery>($"{QueryString}{query.Cursor}");
+            var list = Response._PublishedFileDetails!;
+            List<string>? old = null;
+            
+            if (File.Exists("challenges/.steam.ids"))
+                old = JsonConvert.DeserializeObject<List<string>>(File.ReadAllText("challenges/.steam.ids"))!;
+            
+            if (old is not null)
+                list = Response._PublishedFileDetails!.Where(i => !old.Contains(i.PublishedFileId)).ToList();
+            
+            ManagedArray<PublishedFileDetailsQuery.PublishedFileDetails>
+                ChallengePackIds = new(Response.Total) { list };
+
+            while (true)
+            {
+                Response = Request<PublishedFileDetailsQuery>($"{QueryString}{Response.NextCursor}");
+                
+                if (Response._PublishedFileDetails is null)
+                    break;
+
+                if (old is not null)
+                    ChallengePackIds.Add(Response._PublishedFileDetails!.Where(i => !old.Contains(i.PublishedFileId)));
+                else
+                    ChallengePackIds.Add(Response._PublishedFileDetails);
+
+                Console.WriteLine($"Downloaded: {ChallengePackIds.Count} / {Response.Total}");
+            }
+
+            var Results
+                = new ISteamRemoteStorage.PublishedFileDetailsQuery(
+                    1, 0, Array.Empty<ISteamRemoteStorage.PublishedFileDetailsQuery.PublishedFileDetails>());
+
+            if (ChallengePackIds.Count > 0)
+            {
+                StringBuilder ItemDetailsQuery = new();
+                ItemDetailsQuery.Append(uGET_PUBLISHED_FILE_DETAILS);
+                ItemDetailsQuery.Append(base.RequestKey());
+
+                List<KeyValuePair<string, string>> FormContent = new()
+                {
+                    { "itemcount", ChallengePackIds.Size }
+                };
+
+                ChallengePackIds.ForEach((item, index) =>
+                {
+                    FormContent.Add($"publishedfileids[{index}]", item.PublishedFileId);
+                });
+
+                Console.WriteLine($"Downloading {ChallengePackIds.Count} file details...");
+                Results = Post<ISteamRemoteStorage.PublishedFileDetailsQuery>(
+                    ItemDetailsQuery.ToString(), new FormUrlEncodedContent(FormContent));
+            }
+            string[] @new = old?.ToArray() ?? Array.Empty<string>();
+
+            ManagedArray<string> output = new(ChallengePackIds.Count + @new.Length)
+            {
+                ChallengePackIds.Select(i => i.PublishedFileId).ToArray(),
+                @new
+            };
+
+            File.WriteAllText("challenges/.steam.ids", JsonConvert.SerializeObject(output.ToArray(), Formatting.Indented));
+            if (File.Exists("challenges/.challenge.data"))
+            {
+                var jsonstring = File.ReadAllText("challenges/.challenge.data");
+                var old_results = JsonConvert.DeserializeObject<ISteamRemoteStorage.PublishedFileDetailsQuery>(jsonstring);
+                Results = new(Results.Result, Results.ResultCount + old_results.ResultCount,
+                    old_results._PublishedFileDetails.Concat(Results._PublishedFileDetails).ToArray());
+
+            }
+            File.WriteAllText("challenges/.challenge.data", JsonConvert.SerializeObject(Results, Formatting.Indented));
+
+            Console.WriteLine("Downloaded/Collected all file details");
+            return Results;
+        }
+    }
+}
