@@ -37,7 +37,7 @@ namespace SteamWorkshop.WebAPI.IPublishedFileService
             StringBuilder QueryString = new();
 
             QueryString.Append(uQUERY_FILES);
-            QueryString.Append(RequestKey());
+            QueryString.Append(base.RequestKey());
 
             QueryString.Append("&query_type=");
             QueryString.Append(query.QueryType);
@@ -47,38 +47,41 @@ namespace SteamWorkshop.WebAPI.IPublishedFileService
             QueryString.Append(query.AppId);
             QueryString.Append("&requiredtags[0]=");
             QueryString.Append(query.RequiredTags);
-            QueryString.Append("&cursor=");
+            QueryString.Append("&page=");
 
             Directory.CreateDirectory("challenges");
             Console.WriteLine("Downloading challenge mode steam_ids...");
 
-            PublishedFileDetailsQuery Response = Request<PublishedFileDetailsQuery>($"{QueryString}{query.Cursor}");
-            var list = Response._PublishedFileDetails!;
+            List<PublishedFileDetailsQuery.PublishedFileDetails> list = new();
             List<string>? old = null;
             
             if (File.Exists("challenges/.steam.ids"))
                 old = JsonConvert.DeserializeObject<List<string>>(File.ReadAllText("challenges/.steam.ids"))!;
             
-            if (old is not null)
-                list = Response._PublishedFileDetails!.Where(i => !old.Contains(i.PublishedFileId)).ToList();
+            ManagedArray<PublishedFileDetailsQuery.PublishedFileDetails> ChallengePackIds = null;
             
-            ManagedArray<PublishedFileDetailsQuery.PublishedFileDetails>
-                ChallengePackIds = new(Response.Total) { list };
+            int total = Request<PublishedFileDetailsQuery>(QueryString.ToString().Replace($"rpage={query.ResultsPerPage}", "rpage=1")).Total;
+            double loop = total / (double)query.ResultsPerPage;
+            if (loop > Math.Floor(loop))
+                loop = Math.Floor(loop) + 1;
 
-            while (true)
+            Parallel.For(1, (int)loop +1, (x, g) =>
             {
-                Response = Request<PublishedFileDetailsQuery>($"{QueryString}{Response.NextCursor}");
-                
-                if (Response._PublishedFileDetails is null)
-                    break;
+                var Response = Request<PublishedFileDetailsQuery>($"{QueryString}{x}");
+
+                ChallengePackIds ??= new(Response.Total, true);
+
+                if (Response._PublishedFileDetails is null) return;
 
                 if (old is not null)
-                    ChallengePackIds.Add(Response._PublishedFileDetails!.Where(i => !old.Contains(i.PublishedFileId)));
+                    ChallengePackIds.Add(
+                        Response._PublishedFileDetails
+                        .Where(i => !old.Contains(i.PublishedFileId)));
                 else
                     ChallengePackIds.Add(Response._PublishedFileDetails);
 
                 Console.WriteLine($"Downloaded: {ChallengePackIds.Count} / {Response.Total}");
-            }
+            });
 
             var Results
                 = new ISteamRemoteStorage.PublishedFileDetailsQuery(
@@ -92,7 +95,7 @@ namespace SteamWorkshop.WebAPI.IPublishedFileService
 
                 List<KeyValuePair<string, string>> FormContent = new()
                 {
-                    { "itemcount", ChallengePackIds.Size }
+                    { "itemcount", ChallengePackIds.Count }
                 };
 
                 ChallengePackIds.ForEach((item, index) =>
@@ -113,16 +116,17 @@ namespace SteamWorkshop.WebAPI.IPublishedFileService
             };
 
             File.WriteAllText("challenges/.steam.ids", JsonConvert.SerializeObject(output.ToArray(), Formatting.Indented));
+            
             if (File.Exists("challenges/.challenge.data"))
             {
                 var jsonstring = File.ReadAllText("challenges/.challenge.data");
                 var old_results = JsonConvert.DeserializeObject<ISteamRemoteStorage.PublishedFileDetailsQuery>(jsonstring);
                 Results = new(Results.Result, Results.ResultCount + old_results.ResultCount,
                     old_results._PublishedFileDetails.Concat(Results._PublishedFileDetails).ToArray());
-
             }
-            File.WriteAllText("challenges/.challenge.data", JsonConvert.SerializeObject(Results, Formatting.Indented));
 
+            File.WriteAllText("challenges/.challenge.data", JsonConvert.SerializeObject(Results, Formatting.Indented));
+            
             Console.WriteLine("Downloaded/Collected all file details");
             return Results;
         }

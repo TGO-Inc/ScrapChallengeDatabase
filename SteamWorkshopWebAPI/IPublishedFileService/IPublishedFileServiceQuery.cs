@@ -7,7 +7,6 @@ namespace SteamWorkshop.WebAPI.IPublishedFileService
     {
         public int QueryType { get; set; } = 1;
         public ulong AppId { get; set; } = 387990;
-        public string Cursor { get; set; } = "*";
         public int FileType { get; set; } = 0;
         public string RequiredTags { get; set; } = "Challenge+Pack";
         public int ResultsPerPage { get; set; } = 100;
@@ -18,9 +17,6 @@ namespace SteamWorkshop.WebAPI.IPublishedFileService
         public int Total { get; set; }
         [JsonProperty("publishedfiledetails", NullValueHandling = NullValueHandling.Ignore)]
         public List<PublishedFileDetails>? _PublishedFileDetails { get; set; }
-        [JsonProperty("next_cursor", NullValueHandling = NullValueHandling.Ignore)]
-        public string NextCursor { get => this.next_cursor; set => this.next_cursor = HttpUtility.UrlEncode(value); }
-        private string next_cursor;
         public class PublishedFileDetails
         {
             [JsonProperty("result", NullValueHandling = NullValueHandling.Ignore)]

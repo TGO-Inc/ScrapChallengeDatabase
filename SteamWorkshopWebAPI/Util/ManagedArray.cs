@@ -1,4 +1,7 @@
-﻿using System.Collections;
+﻿using Newtonsoft.Json;
+using System.Collections;
+using System.Collections.Concurrent;
+using System.Threading;
 
 namespace SteamWorkshop.WebAPI.Internal
 {
@@ -6,11 +9,16 @@ namespace SteamWorkshop.WebAPI.Internal
     {
         public readonly int Size = 0;
         private readonly T[] base_array;
-        public int Count { get; private set; } = 0;
-        public ManagedArray(int length)
+        private readonly ConcurrentBag<T> bag;
+        private readonly bool isThreaded;
+        public int Count = 0;
+
+        public ManagedArray(int length, bool threaded = false)
         {
             base_array = new T[length];
             Size = length;
+            isThreaded = threaded;
+            bag = new();
         }
         public T this[int index]
         {
@@ -20,59 +28,95 @@ namespace SteamWorkshop.WebAPI.Internal
         public void Add(T item)
         {
             if (Count >= Size)
-                throw new ArrayFullException();
+                throw new ArrayFullException("T");
 
-            base_array[Count++] = item;
+            if (isThreaded)
+                bag.Add(item);
+            else
+                base_array[Count] = item;
+
+            Interlocked.Increment(ref Count);
         }
         public void Add(T[] items)
         {
             if (Count + items.Length > Size)
-                throw new ArrayFullException();
+                throw new ArrayFullException("T[]");
 
-            items.CopyTo(base_array, Count);
-            Count += items.Length;
+            if (isThreaded)
+                foreach (T item in items)
+                    bag.Add(item);
+            else
+                items.CopyTo(base_array, Count);
+
+            Interlocked.Add(ref Count, items.Length);
         }
         public void Add(List<T> items)
         {
-            if (Count + items.Count > Size)
-                throw new ArrayFullException();
 
-            items.CopyTo(base_array, Count);
-            Count += items.Count;
+            if (Count + items.Count > Size)
+                throw new ArrayFullException("List<T>");
+            
+            if (isThreaded)
+                foreach (T item in items)
+                    bag.Add(item);
+            else
+                items.CopyTo(base_array, Count);
+
+            Interlocked.Add(ref Count, items.Count);
+
         }
         public void Add(IEnumerable<T> items)
         {
             int length = items.Count();
             if (Count + length > Size)
-                throw new ArrayFullException();
+                throw new ArrayFullException("IEnumerable<T>");
+
             foreach (var item in items)
-                this.Add(item);
-            Count += length;
+            {
+                if (isThreaded)
+                    bag.Add(item);
+                else
+                    this.Add(item);
+            }
+
+            Interlocked.Add(ref Count, length);
         }
         public IEnumerator<T> GetEnumerator()
         {
-            for (int i = 0; i < Count; i++)
-            {
-                yield return base_array[i];
-            }
+            if (isThreaded)
+                foreach(var item in bag)
+                    yield return item;
+            else
+                for (int i = 0; i < Count; i++)
+                    yield return base_array[i];
         }
         IEnumerator IEnumerable.GetEnumerator()
         {
-            return GetEnumerator();
+            if(isThreaded)
+                return bag.GetEnumerator();
+            else
+                return this.GetEnumerator();
         }
         public T[] ToArray()
         {
-            return this.base_array;
+            if (isThreaded)
+                return this.bag.ToArray();
+            else
+                return this.base_array;
         }
     }
     internal class ArrayFullException : Exception
     {
-        public ArrayFullException()
-            : base("The array has reached capacity")
+        public ArrayFullException(string msg = "")
+            : this("The array has reached capacity", msg)
         {
         }
-        public ArrayFullException(string msg)
+        public ArrayFullException(string msg, bool t)
             : base(msg)
+        {
+        }
+        public ArrayFullException(string msg, string inr)
+            : base(msg, new ArrayFullException(inr, true))
         {
         }
     }

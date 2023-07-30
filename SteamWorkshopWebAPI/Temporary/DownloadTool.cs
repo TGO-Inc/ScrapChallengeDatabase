@@ -9,7 +9,6 @@ namespace SteamWorkshop.WebAPI
         private readonly Steam3Session Steam3;
         private readonly CDNClientPool CDNClientPool;
         private readonly Server CDNConnection;
-        private ulong ManifestRequestCode;
         public DownloadTool(string username, string password, uint appid)
         {
             this.Steam3 = new Steam3Session(new SteamUser.LogOnDetails()
@@ -23,38 +22,33 @@ namespace SteamWorkshop.WebAPI
             this.CDNConnection = this.CDNClientPool.GetConnection(new());
             this.Steam3.RequestDepotKey(appid, appid);
         }
-        public DepotManifest DownloadManifest(uint depotid, uint appid, ulong manifestid, int timeout = 0)
+        public DepotManifest DownloadManifest(uint depotid, uint appid, ulong manifestid)
         {
-            if (timeout > 100)
-                return null;
-
-            try
+            for (int i = 0; i < 10; i++)
             {
-                return this.CDNClientPool.CDNClient.DownloadManifestAsync(
-                                    depotid,
-                                    manifestid,
-                                    this.ManifestRequestCode,
-                                    this.CDNConnection,
-                                    this.Steam3.DepotKeys[depotid],
-                                    this.CDNClientPool.ProxyServer).GetAwaiter().GetResult();
-            }
-            catch
-            {
-                this.ManifestRequestCode = this.Steam3.GetDepotManifestRequestCodeAsync(
-                    depotid,
-                    appid,
-                    manifestid,
-                "public").GetAwaiter().GetResult();
-
-                // If we could not get the manifest code, this is a fatal error
-                if (this.ManifestRequestCode == 0)
+                try
                 {
-                    Console.WriteLine("No manifest request code was returned for {0} {1}", depotid, manifestid);
-                    return null;
-                }
+                    var ManifestRequestCode = this.Steam3.GetDepotManifestRequestCodeAsync(
+                                depotid,
+                                appid,
+                                manifestid,
+                            "public").GetAwaiter().GetResult();
 
-                return this.DownloadManifest(depotid, appid, manifestid, timeout++);
+                    return this.CDNClientPool.CDNClient.DownloadManifestAsync(
+                                        depotid,
+                                        manifestid,
+                                        ManifestRequestCode,
+                                        this.CDNConnection,
+                                        this.Steam3.DepotKeys[depotid],
+                                        this.CDNClientPool.ProxyServer).GetAwaiter().GetResult();
+                }
+                catch
+                {
+                    Task.Delay(10).Wait();
+                    continue;
+                }
             }
+            return null;
         }
         public byte[] DownloadFile(uint depotid, DepotManifest.ChunkData data)
         {

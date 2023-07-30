@@ -122,22 +122,6 @@ namespace SteamWorkshop.WebAPI.Internal
             this.SentryData = new();
             this.ContentServerPenalty = new();
             this.LoginTokens = new();
-            /*
-            if (details.Username != null)
-            {
-                //var fi = new FileInfo(String.Format("{0}.sentryFile", this.logonDetails.Username));
-                if (this.SentryData != null &&
-                    this.SentryData.TryGetValue(this.logonDetails.Username!, out byte[] value))
-                {
-                    this.logonDetails.SentryFileHash = SHA1.HashData(value);
-                }
-                else if (fi.Exists && fi.Length > 0)
-                {
-                    var sentryData = File.ReadAllBytes(fi.FullName);
-                    this.logonDetails.SentryFileHash = SHA1.HashData(sentryData);
-                    this.SentryData![logonDetails.Username!] = sentryData;
-                }
-            }*/
 
             this.Connect();
         }
@@ -173,7 +157,7 @@ namespace SteamWorkshop.WebAPI.Internal
             if (this.credentials.IsValid || this.bAborted)
                 return this.credentials;
 
-            WaitUntilCallback(() => { }, () => { return this.credentials.IsValid; });
+            this.WaitUntilCallback(() => { }, () => { return this.credentials.IsValid; });
 
             return this.credentials;
         }
@@ -181,19 +165,18 @@ namespace SteamWorkshop.WebAPI.Internal
         {
             if (this.bAborted)
                 return 0;
-            try
-            {
-                var requestCode = await this.steamContent.GetManifestRequestCode(depotId, appId, manifestId, branch);
-                Console.WriteLine("Got manifest request code for {0} {1} result: {2}",
-                    depotId, manifestId,
-                    requestCode);
-                return requestCode;
-            }
-            catch
-            {
-                await Task.Delay(100);
-                return await this.GetDepotManifestRequestCodeAsync(depotId, appId, manifestId, branch);
-            }
+
+            for (int i = 0; i < 10; i++)
+                try
+                {
+                    return await this.steamContent.GetManifestRequestCode(depotId, appId, manifestId, branch);
+                }
+                catch 
+                {
+                    Task.Delay(10).Wait();
+                    continue;
+                }
+            return 0;
         }
 
         public void RequestDepotKey(uint depotId, uint appid = 0)
@@ -210,6 +193,7 @@ namespace SteamWorkshop.WebAPI.Internal
 
                 if (depotKey.Result != EResult.OK)
                 {
+                    Console.WriteLine("Error getting depot key!");
                     this.Abort();
                     return;
                 }
@@ -217,7 +201,7 @@ namespace SteamWorkshop.WebAPI.Internal
                 this.DepotKeys[depotKey.DepotID] = depotKey.DepotKey;
             };
 
-            WaitUntilCallback(() =>
+            this.WaitUntilCallback(() =>
             {
                 this.callbacks.Subscribe(this.steamApps.GetDepotDecryptionKey(depotId, appid), cbMethod);
             }, () => { return completed; });
