@@ -23,14 +23,7 @@ namespace SteamWorkshopScraper
         {
             var t = new PublishedFileService(STEAM_API_KEY);
             var details = t.SendQuery(new());
-            /*
-            var res = new HttpClient()
-                 .GetAsync(
-                     "https://api.steampowered.com/IContentServerDirectoryService/GetServersForSteamPipe/v1")
-                 .GetAwaiter().GetResult();
-            var ret = res.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-            Console.WriteLine(JsonConvert.SerializeObject(JsonConvert.DeserializeObject(ret), Formatting.Indented));
-            */
+
             if (!Directory.Exists("challenges")) Directory.CreateDirectory("challenges");
             var start = DateTime.Now;
 

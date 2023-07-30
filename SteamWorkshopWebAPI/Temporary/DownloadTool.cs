@@ -1,14 +1,6 @@
 ﻿using SteamKit2;
 using SteamKit2.CDN;
 using SteamWorkshop.WebAPI.Internal;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using static SteamKit2.Internal.CContentBuilder_CommitAppBuild_Request;
-using static SteamKit2.Internal.CContentBuilder_GetMissingDepotChunks_Response;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace SteamWorkshop.WebAPI
 {
