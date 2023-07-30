@@ -119,9 +119,13 @@ namespace SteamWorkshop.WebAPI.Internal
 
             Console.WriteLine("Connecting to Steam3...");
 
+            this.SentryData = new();
+            this.ContentServerPenalty = new();
+            this.LoginTokens = new();
+            /*
             if (details.Username != null)
             {
-                var fi = new FileInfo(String.Format("{0}.sentryFile", this.logonDetails.Username));
+                //var fi = new FileInfo(String.Format("{0}.sentryFile", this.logonDetails.Username));
                 if (this.SentryData != null &&
                     this.SentryData.TryGetValue(this.logonDetails.Username!, out byte[] value))
                 {
@@ -133,7 +137,7 @@ namespace SteamWorkshop.WebAPI.Internal
                     this.logonDetails.SentryFileHash = SHA1.HashData(sentryData);
                     this.SentryData![logonDetails.Username!] = sentryData;
                 }
-            }
+            }*/
 
             this.Connect();
         }
@@ -156,7 +160,7 @@ namespace SteamWorkshop.WebAPI.Internal
                 {
                     lock (this.steamLock)
                     {
-                        WaitForCallbacks();
+                        this.WaitForCallbacks();
                     }
                 } while (!this.bAborted && this.seq == seq && !waiter());
             }
@@ -234,7 +238,7 @@ namespace SteamWorkshop.WebAPI.Internal
             this.connectionBackoff = 0;
             this.authSession = null;
 
-            ResetConnectionFlags();
+            this.ResetConnectionFlags();
 
             this.connectTime = DateTime.Now;
             this.steamClient.Connect();

@@ -5,7 +5,7 @@
     <TargetFramework>net7.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <StartupObject>WorkshopScraper</StartupObject>
+    <StartupObject>SteamWorkshopScraper.WorkshopScraper</StartupObject>
   </PropertyGroup>
 
   <ItemGroup>
@@ -14,7 +14,16 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\SteamWorkshopWebAPI\SteamWorkshop.WebAPI.csproj" />
+    <ProjectReference Include="..\SteamWorkshopWebAPI\SteamWorkshop.WebAPI.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="priv.key">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="priv.password">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

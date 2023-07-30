@@ -25,7 +25,8 @@ namespace SteamWorkshop.WebAPI
         }
         public DepotManifest DownloadManifest(uint depotid, uint appid, ulong manifestid, int timeout = 0)
         {
-            if (timeout > 100) return null;
+            if (timeout > 100)
+                return null;
 
             try
             {
