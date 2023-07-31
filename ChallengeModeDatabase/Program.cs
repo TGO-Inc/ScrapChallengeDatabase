@@ -3,7 +3,7 @@ using SteamWorkshop.WebAPI.IPublishedFileService;
 using System.Net;
 using System.Collections.Concurrent;
 
-namespace SteamWorkshopScraper
+namespace ChallengeMode.Database
 {
     public class WorkshopScraper
     {
@@ -50,7 +50,7 @@ namespace SteamWorkshopScraper
                 }
             });
 
-            foreach(var file in membag)
+            foreach (var file in membag)
             {
                 var fname = $"challenges/{file.Key}.json";
                 File.WriteAllBytes(fname, file.Value);
