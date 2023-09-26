@@ -86,7 +86,7 @@ namespace ChallengeMode.Database
             string command;
             ProcessStartInfo psi;
 
-            string workshopVdfPath = "item$1.vdf"; // Replace with the path to your .vdf file
+            string workshopVdfPath = "item_$1.vdf"; // Replace with the path to your .vdf file
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
