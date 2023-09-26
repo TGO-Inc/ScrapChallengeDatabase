@@ -1,0 +1,10 @@
+﻿"workshopitem"
+{
+    "appid" "387990"
+    "contentfolder" "/path/to/your/content"
+    "previewfile" "/path/to/your/previewimage.jpg"
+    "visibility" "0"
+    "title" "Challenge Pack DataBase"
+    "description" "Your Workshop Item Description"
+    "changenote" "Initial upload" 
+}

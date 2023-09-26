@@ -2,6 +2,11 @@
 using SteamWorkshop.WebAPI.IPublishedFileService;
 using System.Net;
 using System.Collections.Concurrent;
+using Newtonsoft.Json;
+using ChallengeModeDatabase;
+using System.Text;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
 
 namespace ChallengeMode.Database
 {
@@ -16,6 +21,14 @@ namespace ChallengeMode.Database
             ServicePointManager.MaxServicePoints = 1000;
             ServicePointManager.ReusePort = true;
 
+            UploadWorkshopItem();
+
+
+            Environment.Exit(0);
+            return 0;
+        }
+        public static void ScrapeWorkshop()
+        {
             var sqtime = DateTime.Now;
             var iFileService = new PublishedFileService(STEAM_API_KEY);
             var details = iFileService.SendQuery(new());
@@ -50,16 +63,61 @@ namespace ChallengeMode.Database
                 }
             });
 
+            List<string> guid_list = new();
             foreach (var file in membag)
             {
+                var data = JsonConvert.DeserializeObject<DescriptionFile>
+                    (Encoding.Default.GetString(file.Value));
+                guid_list.Add(data.localId);
+
                 var fname = $"challenges/{file.Key}.json";
                 File.WriteAllBytes(fname, file.Value);
             }
 
+            File.WriteAllText("challenges/ChallengeList.json",
+                JsonConvert.SerializeObject(new ChallengeList() { challenges = guid_list.ToArray() }));
+
             Console.WriteLine($"Elapsed: {(DateTime.Now - start).TotalSeconds}s");
             Console.WriteLine($"Proccessed: {counter}/{details.ResultCount}");
-            Environment.Exit(0);
-            return 0;
+        }
+        public static void UploadWorkshopItem()
+        {
+            string steamCmdPath;
+            string command;
+            ProcessStartInfo psi;
+
+            string workshopVdfPath = "/path/to/your/item.vdf"; // Replace with the path to your .vdf file
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                steamCmdPath = @"C:\path\to\steamcmd.exe"; // Replace with the path to steamcmd on your Windows machine
+                command = $"{steamCmdPath} +login {USERNAME} {PASSWORD} " +
+                          $"+workshop_build_item {workshopVdfPath} " +
+                          $"+quit";
+                psi = new ProcessStartInfo("cmd.exe", $"/c \"{command}\"");
+            }
+            else // Assuming Linux if not Windows
+            {
+                steamCmdPath = "/usr/games/steamcmd"; // Path to steamcmd on Linux
+                command = $"{steamCmdPath} +login {USERNAME} {PASSWORD} " +
+                          $"+workshop_build_item {workshopVdfPath} " +
+                          $"+quit";
+                psi = new ProcessStartInfo("/bin/bash", $"-c \"{command}\"");
+            }
+
+            psi.RedirectStandardOutput = true;
+            psi.RedirectStandardError = true;
+            psi.UseShellExecute = false;
+            psi.CreateNoWindow = true;
+
+            using Process process = new() { StartInfo = psi };
+            process.OutputDataReceived += (sender, e) => Console.WriteLine(e.Data);
+            process.ErrorDataReceived += (sender, e) => Console.Error.WriteLine(e.Data);
+
+            process.Start();
+            process.BeginOutputReadLine();
+            process.BeginErrorReadLine();
+            process.WaitForExit();
         }
     }
 }
