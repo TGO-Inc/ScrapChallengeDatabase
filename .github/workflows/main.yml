@@ -1,0 +1,32 @@
+name: CI/CD Workflow
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: '7.0.0' # adjust this to your project's .NET version
+      
+      - name: Build
+        run: dotnet build --configuration Release
+      
+      - name: Trigger Webhook
+        if: ${{ success() }}
+        env:
+          WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
+          WEBHOOK_SECRET: ${{ secrets.WEBHOOK_SECRET }}
+        run: |
+          curl -X POST \
+               -H "X-Hub-Signature-256: $WEBHOOK_SECRET" \
+               $WEBHOOK_URL
