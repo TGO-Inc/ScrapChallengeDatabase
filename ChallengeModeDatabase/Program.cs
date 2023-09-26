@@ -86,13 +86,13 @@ namespace ChallengeMode.Database
             string command;
             ProcessStartInfo psi;
 
-            string workshopVdfPath = "/path/to/your/item.vdf"; // Replace with the path to your .vdf file
+            string workshopVdfPath = "item$1.vdf"; // Replace with the path to your .vdf file
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 steamCmdPath = @"C:\path\to\steamcmd.exe"; // Replace with the path to steamcmd on your Windows machine
                 command = $"{steamCmdPath} +login {USERNAME} {PASSWORD} " +
-                          $"+workshop_build_item {workshopVdfPath} " +
+                          $"+workshop_build_item {workshopVdfPath.Replace("$1", "windows")} " +
                           $"+quit";
                 psi = new ProcessStartInfo("cmd.exe", $"/c \"{command}\"");
             }
@@ -100,7 +100,7 @@ namespace ChallengeMode.Database
             {
                 steamCmdPath = "/usr/games/steamcmd"; // Path to steamcmd on Linux
                 command = $"{steamCmdPath} +login {USERNAME} {PASSWORD} " +
-                          $"+workshop_build_item {workshopVdfPath} " +
+                          $"+workshop_build_item {workshopVdfPath.Replace("$1", "linux")} " +
                           $"+quit";
                 psi = new ProcessStartInfo("/bin/bash", $"-c \"{command}\"");
             }
