@@ -23,7 +23,6 @@ namespace SteamWorkshop.WebAPI.IPublishedFileService
         {
             var Results = new HttpClient().GetAsync(query).GetAwaiter().GetResult();
             var Json = Results.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-            Console.WriteLine(Json);
             return JsonConvert.DeserializeObject<T>(Json[12..^1])!;
         }
         private static T Post<T>(string query, FormUrlEncodedContent content)
@@ -61,7 +60,6 @@ namespace SteamWorkshop.WebAPI.IPublishedFileService
             
             ManagedArray<PublishedFileDetailsQuery.PublishedFileDetails> ChallengePackIds = null;
 
-            Console.WriteLine(QueryString.ToString());
             int total = Request<PublishedFileDetailsQuery>(QueryString.ToString().Replace($"rpage={query.ResultsPerPage}", "rpage=1")).Total;
             double loop = total / (double)query.ResultsPerPage;
             if (loop > Math.Floor(loop))
