@@ -99,7 +99,7 @@ namespace ChallengeMode.Database
             else // Assuming Linux if not Windows
             {
                 steamCmdPath = "/usr/games/steamcmd"; // Path to steamcmd on Linux
-                command = $"{steamCmdPath} +login {USERNAME} {PASSWORD} " +
+                command = $"{steamCmdPath} +login {USERNAME} \"{PASSWORD}\" " +
                           $"+workshop_build_item {workshopVdfPath.Replace("$1", "linux")} " +
                           $"+quit";
                 psi = new ProcessStartInfo("/bin/bash", $"-c \"{command}\"");
