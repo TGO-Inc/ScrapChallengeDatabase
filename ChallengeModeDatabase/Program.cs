@@ -100,7 +100,7 @@ namespace ChallengeMode.Database
             {
                 steamCmdPath = "/usr/games/steamcmd"; // Path to steamcmd on Linux
                 command = $"{steamCmdPath} +login {USERNAME} '{PASSWORD}' " +
-                          $"+workshop_build_item {Path.Combine(Environment.CurrentDirectory,workshopVdfPath.Replace("$1", "linux"))} " +
+                          $"+workshop_build_item '{Path.Combine(Environment.CurrentDirectory,workshopVdfPath.Replace("$1", "linux"))}' " +
                           $"+quit";
                 psi = new ProcessStartInfo("/bin/bash", $"-c \"{command}\"");
             }
