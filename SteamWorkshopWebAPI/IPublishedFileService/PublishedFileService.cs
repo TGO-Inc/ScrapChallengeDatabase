@@ -60,7 +60,8 @@ namespace SteamWorkshop.WebAPI.IPublishedFileService
                 old = JsonConvert.DeserializeObject<List<string>>(File.ReadAllText("challenges/.steam.ids"))!;
             
             ManagedArray<PublishedFileDetailsQuery.PublishedFileDetails> ChallengePackIds = null;
-            
+
+            Console.WriteLine(QueryString.ToString());
             int total = Request<PublishedFileDetailsQuery>(QueryString.ToString().Replace($"rpage={query.ResultsPerPage}", "rpage=1")).Total;
             double loop = total / (double)query.ResultsPerPage;
             if (loop > Math.Floor(loop))
