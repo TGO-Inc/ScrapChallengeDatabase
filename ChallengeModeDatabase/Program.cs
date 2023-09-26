@@ -13,9 +13,9 @@ namespace ChallengeMode.Database
 {
     public class WorkshopScraper
     {
-        private static readonly char[] STEAM_API_KEY = File.ReadAllText("priv.key").ToCharArray();
+        private static readonly char[] STEAM_API_KEY = File.ReadAllText("priv.key").Trim().ToCharArray();
         private static readonly string USERNAME = "AutomatedTool";
-        private static readonly string PASSWORD = File.ReadAllText("priv.password");
+        private static readonly string PASSWORD = File.ReadAllText("priv.password").Trim();
         private static readonly object ConsoleLock = new();
         private static readonly object SyncLock = new();
         public static async Task Main(string[] args)
