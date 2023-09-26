@@ -1,4 +1,4 @@
-![WorkshopScraper](/mod/preview.png)
+![WorkshopScraper](/ChallengeModeDatabase/Mod/preview.png)
 
 # scrap-mechanic-mod-scraper
 Scrapes the Steam Workshop for Scrap Mechanic mods and stores useful information.
