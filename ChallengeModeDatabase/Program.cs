@@ -140,7 +140,7 @@ namespace ChallengeMode.Database
 
             ChallengeList old = new();
             if (File.Exists(Path.Combine("Mod","ChallengeList.json")))
-                JsonConvert.DeserializeObject<ChallengeList>(File.ReadAllText(Path.Combine("Mod","ChallengeList.json")));
+                old = JsonConvert.DeserializeObject<ChallengeList>(File.ReadAllText(Path.Combine("Mod","ChallengeList.json")));
 
             File.WriteAllText(Path.Combine("Mod","ChallengeList.json"),
                 JsonConvert.SerializeObject(new ChallengeList() { challenges = guid_list.ToArray().Union(old.challenges).ToArray() }));
