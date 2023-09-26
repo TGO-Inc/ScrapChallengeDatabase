@@ -91,7 +91,7 @@ namespace ChallengeMode.Database
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 steamCmdPath = @"C:\path\to\steamcmd.exe"; // Replace with the path to steamcmd on your Windows machine
-                command = $"{steamCmdPath} +login {USERNAME} \"{PASSWORD}\" " +
+                command = $"{steamCmdPath} +login {USERNAME} '{PASSWORD}' " +
                           $"+workshop_build_item {workshopVdfPath.Replace("$1", "windows")} " +
                           $"+quit";
                 psi = new ProcessStartInfo("cmd.exe", $"/c \"{command}\"");
@@ -99,7 +99,7 @@ namespace ChallengeMode.Database
             else // Assuming Linux if not Windows
             {
                 steamCmdPath = "/usr/games/steamcmd"; // Path to steamcmd on Linux
-                command = $"{steamCmdPath} +login {USERNAME} \"{PASSWORD}\" " +
+                command = $"{steamCmdPath} +login {USERNAME} '{PASSWORD}' " +
                           $"+workshop_build_item {workshopVdfPath.Replace("$1", "linux")} " +
                           $"+quit";
                 psi = new ProcessStartInfo("/bin/bash", $"-c \"{command}\"");
