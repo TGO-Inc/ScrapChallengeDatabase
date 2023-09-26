@@ -23,6 +23,7 @@ namespace SteamWorkshop.WebAPI.IPublishedFileService
         {
             var Results = new HttpClient().GetAsync(query).GetAwaiter().GetResult();
             var Json = Results.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            Console.WriteLine(Json);
             return JsonConvert.DeserializeObject<T>(Json[12..^1])!;
         }
         private static T Post<T>(string query, FormUrlEncodedContent content)
