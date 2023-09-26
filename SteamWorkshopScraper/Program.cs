@@ -31,7 +31,7 @@ namespace SteamWorkshopScraper
 
             Parallel.ForEach(details._PublishedFileDetails, (item, loop, a) =>
             {
-                var fname = $"challenges/{item.Publishedfileid}.json";
+                var fname = Path.Combine("challenges", $"{item.Publishedfileid}.json");
                 if (File.Exists(fname)) return;
                 try
                 {
@@ -52,7 +52,7 @@ namespace SteamWorkshopScraper
 
             foreach(var file in membag)
             {
-                var fname = $"challenges/{file.Key}.json";
+                var fname = Path.Combine("challenges", $"{file.Key}.json");
                 File.WriteAllBytes(fname, file.Value);
             }
 
