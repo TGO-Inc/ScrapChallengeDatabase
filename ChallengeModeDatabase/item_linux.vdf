@@ -3,12 +3,5 @@
     "appid" "387990"
     "contentfolder" "{{$1}}/Mod/"
     "previewfile" "{{$1}}/Mod/preview.jpg"
-    "title" "Challenge Pack Database"
-    "description" "A dependency that includes information about all Challenge Packs.
-    This mod is meant for mod makers to use in their mods.
-    It contains a list of all UUID's of public Challenge Packs found on the workshop.
-    The database is updated automatically every 12 hours.
-    Usage and more information can be found on GitHub. https://github.com/TGO-Inc/SteamWorkshopScraper"
-    "changenote" "Update" 
     "publishedfileid" "3041422152"
 }

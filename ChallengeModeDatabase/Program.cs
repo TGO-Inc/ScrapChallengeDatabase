@@ -8,6 +8,7 @@ using System.Text;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Linq;
+using System.Security.Cryptography;
 
 namespace ChallengeMode.Database
 {
@@ -16,13 +17,44 @@ namespace ChallengeMode.Database
         private static readonly char[] STEAM_API_KEY = File.ReadAllText("priv.key").Trim().ToCharArray();
         private static readonly string USERNAME = "AutomatedTool";
         private static readonly string PASSWORD = File.ReadAllText("priv.password").Trim();
+        
         private static readonly object ConsoleLock = new();
         private static readonly object SyncLock = new();
-        public static async Task Main(string[] args)
+
+        private static string steamCmdPath = string.Empty;
+        private static string command = string.Empty;
+        private static string startCmd = string.Empty;
+        private static string lastHash = string.Empty;
+        private static readonly string workshopVdfPath = "item_$1.vdf";
+        public static async Task Main(string[] _)
         {
             ServicePointManager.DefaultConnectionLimit = 1000;
             ServicePointManager.MaxServicePoints = 1000;
             ServicePointManager.ReusePort = true;
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                steamCmdPath = @"C:\path\to\steamcmd.exe"; // Replace with the path to steamcmd on your Windows machine
+                command = $"{steamCmdPath} +login {USERNAME} '{PASSWORD}' " +
+                          $"+workshop_build_item {workshopVdfPath.Replace("$1", "windows")} " +
+                          $"+quit";
+                startCmd = "cmd.exe";
+                command = $"/c \"{command}\"";
+            }
+            else // Assuming Linux if not Windows
+            {
+                var filepath = workshopVdfPath.Replace("$1", "linux");
+                var cd = Environment.CurrentDirectory;
+                var text = File.ReadAllText(filepath).Replace("{{$1}}", cd);
+                File.WriteAllText(filepath, text);
+
+                steamCmdPath = "/usr/games/steamcmd"; // Path to steamcmd on Linux
+                command = $"{steamCmdPath} +login {USERNAME} '{PASSWORD}' " +
+                          $"+workshop_build_item '{Path.Combine(cd, filepath)}' " +
+                          $"+quit";
+                command = $"-c \"{command}\"";
+                startCmd = "/bin/bash";
+            }
 
             CancellationTokenSource cts = new();
 
@@ -36,9 +68,11 @@ namespace ChallengeMode.Database
                     {
                         Task.Delay(1000).Wait();
                     }
+                    Console.WriteLine($"Begining Workshop Upload at [{DateTime.UtcNow}]");
                     UploadWorkshopItem();
+                    Console.WriteLine($"Next working time [{DateTime.UtcNow + TimeSpan.FromSeconds(12)}]");
                 }
-            }, null, TimeSpan.Zero, TimeSpan.FromHours(12));
+            }, null, TimeSpan.Zero, TimeSpan.FromSeconds(12));
 
             // Wait for a cancellation request (e.g. user pressing Ctrl+C)
             Console.CancelKeyPress += (sender, e) =>
@@ -65,16 +99,17 @@ namespace ChallengeMode.Database
                 }
             }
         }
-        public static bool ScrapeWorkshop()
+        private static bool ScrapeWorkshop()
         {
             var sqtime = DateTime.Now;
             var iFileService = new PublishedFileService(STEAM_API_KEY);
             var (details, remainding_files_exist) = iFileService.SendQuery(new());
             Console.WriteLine($"Query Time: {(DateTime.Now - sqtime).TotalSeconds}s");
 
-            if (!Directory.Exists("challenges")) Directory.CreateDirectory("challenges");
+            if (!Directory.Exists("challenges"))
+                Directory.CreateDirectory("challenges");
+            
             var start = DateTime.Now;
-
             int counter = 0;
             var dltool = new DownloadTool(USERNAME, PASSWORD, 387990);
             var membag = new ConcurrentBag<KeyValuePair<string, byte[]>>();
@@ -150,49 +185,56 @@ namespace ChallengeMode.Database
 
             return remainding_files_exist;
         }
-        public static void UploadWorkshopItem()
+        private static void UploadWorkshopItem()
         {
-            string steamCmdPath;
-            string command;
-            ProcessStartInfo psi;
-
-            string workshopVdfPath = "item_$1.vdf"; // Replace with the path to your .vdf file
-
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            if (lastHash != ComputeDirectoryHash("Mod", out string newHash))
             {
-                steamCmdPath = @"C:\path\to\steamcmd.exe"; // Replace with the path to steamcmd on your Windows machine
-                command = $"{steamCmdPath} +login {USERNAME} '{PASSWORD}' " +
-                          $"+workshop_build_item {workshopVdfPath.Replace("$1", "windows")} " +
-                          $"+quit";
-                psi = new ProcessStartInfo("cmd.exe", $"/c \"{command}\"");
+                lastHash = newHash;
+
+                ProcessStartInfo psi = new(startCmd, command)
+                {
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+
+                using Process process = new() { StartInfo = psi };
+                process.OutputDataReceived += (sender, e) => Console.WriteLine(e.Data);
+                process.ErrorDataReceived += (sender, e) => Console.Error.WriteLine(e.Data);
+
+                process.Start();
+                process.BeginOutputReadLine();
+                process.BeginErrorReadLine();
+                process.WaitForExit();
             }
-            else // Assuming Linux if not Windows
+        }
+
+        private static string ComputeDirectoryHash(string directoryPath, out string ovar)
+        {
+            // Create a new instance of SHA256
+            using SHA256 sha256 = SHA256.Create();
+
+            // Get all files in the directory, ordered by name
+            var filePaths = Directory.GetFiles(directoryPath, "*", SearchOption.AllDirectories)
+                                     .OrderBy(p => p).ToList();
+
+            // Hash the content of each file and concatenate the hashes
+            StringBuilder combinedHashes = new StringBuilder();
+            foreach (var filePath in filePaths)
             {
-                var filepath = workshopVdfPath.Replace("$1", "linux");
-                var cd = Environment.CurrentDirectory;
-                var text = File.ReadAllText(filepath).Replace("{{$1}}", cd);
-                File.WriteAllText(filepath, text);
-
-                steamCmdPath = "/usr/games/steamcmd"; // Path to steamcmd on Linux
-                command = $"{steamCmdPath} +login {USERNAME} '{PASSWORD}' " +
-                          $"+workshop_build_item '{Path.Combine(cd, filepath)}' " +
-                          $"+quit";
-                psi = new ProcessStartInfo("/bin/bash", $"-c \"{command}\"");
+                byte[] fileHash;
+                using (var stream = File.OpenRead(filePath))
+                {
+                    fileHash = sha256.ComputeHash(stream);
+                }
+                combinedHashes.Append(BitConverter.ToString(fileHash).Replace("-", "").ToLower());
             }
 
-            psi.RedirectStandardOutput = true;
-            psi.RedirectStandardError = true;
-            psi.UseShellExecute = false;
-            psi.CreateNoWindow = true;
-
-            using Process process = new() { StartInfo = psi };
-            process.OutputDataReceived += (sender, e) => Console.WriteLine(e.Data);
-            process.ErrorDataReceived += (sender, e) => Console.Error.WriteLine(e.Data);
-
-            process.Start();
-            process.BeginOutputReadLine();
-            process.BeginErrorReadLine();
-            process.WaitForExit();
+            // Compute the final hash of the concatenated hashes
+            byte[] finalHash = sha256.ComputeHash(Encoding.UTF8.GetBytes(combinedHashes.ToString()));
+            ovar = BitConverter.ToString(finalHash).Replace("-", "").ToLower();
+            return ovar;
         }
     }
 }
