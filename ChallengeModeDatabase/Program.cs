@@ -83,7 +83,7 @@ namespace ChallengeMode.Database
 
             Parallel.ForEach(details._PublishedFileDetails, (item, loop, a) =>
             {
-                var fname = $"challenges/{item.Publishedfileid}.json";
+                var fname = Path.Combine("challenges", $"{item.Publishedfileid}.json");
                 if (File.Exists(fname)) return;
                 try
                 {
@@ -116,7 +116,7 @@ namespace ChallengeMode.Database
                 //var old = JsonConvert.DeserializeObject<List<string>>(File.ReadAllText("challenges/.steam.ids"))!;
                 foreach(var failedItem in failed_items)
                 {
-                    var fname = $"challenges/{failedItem.Publishedfileid}.json";
+                    var fname = Path.Combine("challenges", $"{failedItem.Publishedfileid}.json");
                     //old.Remove(failedItem.Publishedfileid);
                     if (File.Exists(fname))
                     {
@@ -134,15 +134,15 @@ namespace ChallengeMode.Database
                     (Encoding.Default.GetString(file.Value));
                 guid_list.Add(data.localId);
 
-                var fname = $"challenges/{file.Key}.json";
+                var fname = Path.Combine("challenges",$"{file.Key}.json");
                 File.WriteAllBytes(fname, file.Value);
             }
 
             ChallengeList old = new();
-            if (File.Exists("Mod/ChallengeList.json"))
-                JsonConvert.DeserializeObject<ChallengeList>(File.ReadAllText("Mod/ChallengeList.json"));
+            if (File.Exists(Path.Combine("Mod","ChallengeList.json")))
+                JsonConvert.DeserializeObject<ChallengeList>(File.ReadAllText(Path.Combine("Mod","ChallengeList.json")));
 
-            File.WriteAllText("Mod/ChallengeList.json",
+            File.WriteAllText(Path.Combine("Mod","ChallengeList.json"),
                 JsonConvert.SerializeObject(new ChallengeList() { challenges = guid_list.ToArray().Union(old.challenges).ToArray() }));
 
             Console.WriteLine($"Elapsed: {(DateTime.Now - start).TotalSeconds}s");

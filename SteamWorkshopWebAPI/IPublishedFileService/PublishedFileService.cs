@@ -55,8 +55,8 @@ namespace SteamWorkshop.WebAPI.IPublishedFileService
             List<PublishedFileDetailsQuery.PublishedFileDetails> list = new();
             List<string>? old = null;
             
-            if (File.Exists("challenges/.steam.ids"))
-                old = JsonConvert.DeserializeObject<List<string>>(File.ReadAllText("challenges/.steam.ids"))!;
+            if (File.Exists(Path.Combine("challenges",".steam.ids")))
+                old = JsonConvert.DeserializeObject<List<string>>(File.ReadAllText(Path.Combine("challenges",".steam.ids")))!;
             
             ManagedArray<PublishedFileDetailsQuery.PublishedFileDetails> ChallengePackIds = null;
 
@@ -115,17 +115,17 @@ namespace SteamWorkshop.WebAPI.IPublishedFileService
                 @new
             };
 
-            File.WriteAllText("challenges/.steam.ids", JsonConvert.SerializeObject(output.ToArray(), Formatting.Indented));
+            File.WriteAllText(Path.Combine("challenges",".steam.ids"), JsonConvert.SerializeObject(output.ToArray(), Formatting.Indented));
             
-            if (File.Exists("challenges/.challenge.data"))
+            if (File.Exists(Path.Combine("challenges",".challenge.data")))
             {
-                var jsonstring = File.ReadAllText("challenges/.challenge.data");
+                var jsonstring = File.ReadAllText(Path.Combine("challenges",".challenge.data"));
                 var old_results = JsonConvert.DeserializeObject<ISteamRemoteStorage.PublishedFileDetailsQuery>(jsonstring);
                 Results = new(Results.Result, Results.ResultCount + old_results.ResultCount,
                     old_results._PublishedFileDetails.Concat(Results._PublishedFileDetails).ToArray());
             }
 
-            File.WriteAllText("challenges/.challenge.data", JsonConvert.SerializeObject(Results, Formatting.Indented));
+            File.WriteAllText(Path.Combine("challenges",".challenge.data"), JsonConvert.SerializeObject(Results, Formatting.Indented));
             if (ChallengePackIds.Count < total & ChallengePackIds.Count > 0) {
                 Console.WriteLine("Downloaded/Collected SOME...? file details");
                 return (Results, true);
