@@ -11,6 +11,7 @@ namespace SteamWorkshop.WebAPI
         private readonly char[] private_key;
         public SteamHTTP (char[] key)
         {
+            Console.WriteLine(key);
             this.private_key = key;
         }
         internal string RequestKey()
