@@ -3,7 +3,6 @@
     "appid" "387990"
     "contentfolder" "{{$1}}/Mod/"
     "previewfile" "{{$1}}/Mod/preview.jpg"
-    "visibility" "0"
     "title" "Challenge Pack Database"
     "description" "Description"
     "changenote" "Update" 
