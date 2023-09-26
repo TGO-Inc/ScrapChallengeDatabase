@@ -70,9 +70,9 @@ namespace ChallengeMode.Database
                     }
                     Console.WriteLine($"Begining Workshop Upload at [{DateTime.UtcNow}]");
                     UploadWorkshopItem();
-                    Console.WriteLine($"Next working time [{DateTime.UtcNow + TimeSpan.FromSeconds(12)}]");
+                    Console.WriteLine($"Next working time [{DateTime.UtcNow + TimeSpan.FromSeconds(120)}]");
                 }
-            }, null, TimeSpan.Zero, TimeSpan.FromSeconds(12));
+            }, null, TimeSpan.Zero, TimeSpan.FromSeconds(120));
 
             // Wait for a cancellation request (e.g. user pressing Ctrl+C)
             Console.CancelKeyPress += (sender, e) =>
@@ -207,6 +207,10 @@ namespace ChallengeMode.Database
                 process.BeginOutputReadLine();
                 process.BeginErrorReadLine();
                 process.WaitForExit();
+            }
+            else
+            {
+                Console.WriteLine("No Change In Content. Skipping workshop update!");
             }
         }
 
