@@ -18,7 +18,7 @@ namespace SteamWorkshopScraper
 
             var sqtime = DateTime.Now;
             var iFileService = new PublishedFileService(STEAM_API_KEY);
-            var details = iFileService.SendQuery(new());
+            var (details, fail) = iFileService.SendQuery(new());
             Console.WriteLine($"Query Time: {(DateTime.Now - sqtime).TotalSeconds}s");
 
             if (!Directory.Exists("challenges")) Directory.CreateDirectory("challenges");

@@ -1,8 +1,8 @@
 ﻿"workshopitem"
 {
     "appid" "387990"
-    "contentfolder" "/root/steam/SteamWorkshopScraper/ChallengeModeDatabase/bin/Release/net7.0/Mod/"
-    "previewfile" "/root/steam/SteamWorkshopScraper/ChallengeModeDatabase/bin/Release/net7.0/Mod/preview.jpg"
+    "contentfolder" "{{$1}}/Mod/"
+    "previewfile" "{{$1}}/Mod/preview.jpg"
     "visibility" "0"
     "title" "Challenge Pack Database"
     "description" "Description"

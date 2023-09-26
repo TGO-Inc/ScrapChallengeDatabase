@@ -17,6 +17,6 @@ namespace ChallengeModeDatabase
     }
     internal class ChallengeList
     {
-        public string[] challenges { get; set; }
+        public string[] challenges { get; set; } = new string[0];
     }
 }

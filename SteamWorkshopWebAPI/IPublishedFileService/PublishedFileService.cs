@@ -32,7 +32,7 @@ namespace SteamWorkshop.WebAPI.IPublishedFileService
             return JsonConvert.DeserializeObject<T>(Json[12..^1])!;
         }
 
-        public ISteamRemoteStorage.PublishedFileDetailsQuery SendQuery(IPublishedFileServiceQuery query)
+        public (ISteamRemoteStorage.PublishedFileDetailsQuery, bool) SendQuery(IPublishedFileServiceQuery query)
         {
             StringBuilder QueryString = new();
 
@@ -126,9 +126,12 @@ namespace SteamWorkshop.WebAPI.IPublishedFileService
             }
 
             File.WriteAllText("challenges/.challenge.data", JsonConvert.SerializeObject(Results, Formatting.Indented));
-            
+            if (ChallengePackIds.Count < total & ChallengePackIds.Count > 0) {
+                Console.WriteLine("Downloaded/Collected SOME...? file details");
+                return (Results, true);
+            }
             Console.WriteLine("Downloaded/Collected all file details");
-            return Results;
+            return (Results, false);
         }
     }
 }
