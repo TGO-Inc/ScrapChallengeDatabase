@@ -91,7 +91,7 @@ namespace ChallengeMode.Database
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 steamCmdPath = @"C:\path\to\steamcmd.exe"; // Replace with the path to steamcmd on your Windows machine
-                command = $"{steamCmdPath} +login {USERNAME} {PASSWORD} " +
+                command = $"{steamCmdPath} +login {USERNAME} \"{PASSWORD}\" " +
                           $"+workshop_build_item {workshopVdfPath.Replace("$1", "windows")} " +
                           $"+quit";
                 psi = new ProcessStartInfo("cmd.exe", $"/c \"{command}\"");
