@@ -123,7 +123,8 @@ namespace ChallengeMode.Database
                 }
             }, null, TimeSpan.Zero, TimeSpan.FromHours(4));*/
 
-            RunTasks(); // Initial run
+            // Initial run
+            RunTasks();
 
             // Wait for a cancellation request (e.g. user pressing Ctrl+C)
             Console.CancelKeyPress += (sender, e) =>
