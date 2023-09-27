@@ -16,5 +16,5 @@ jobs:
           WEBHOOK_SECRET: ${{ secrets.WEBHOOK_SECRET }}
           CLOUDFLARE_TOKEN: ${{ secrets.CLOUDFLARE_TOKEN }}
         run: |
-          curl -X POST $WEBHOOK_URL -H "X-Hub-Signature-256: $WEBHOOK_SECRET" -H "x-custom-token: $CLOUDFLARE_TOKEN"
+          curl -X POST $WEBHOOK_URL -H "User-Agent: TheGuy920" -H "X-Hub-Signature-256: $WEBHOOK_SECRET" -H "x-custom-token: $CLOUDFLARE_TOKEN"
                
