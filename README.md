@@ -1,7 +1,7 @@
-![WorkshopScraper](/ChallengeModeDatabase/Mod/preview.png)
+![WorkshopScraper](/ChallengeModeDatabase/Mod/preview.jpg)
 
-# scrap-mechanic-mod-scraper
-Scrapes the Steam Workshop for Scrap Mechanic mods and stores useful information.
+# Scrap-Mechanic-Mod-Scraper
+Scrapes the Steam Workshop for Scrap Mechanic items and stores useful information.
 
 ## Usage
 do sm.json.open(todo) and then use the list of uuids to check for challenges: local success, data = pcall(sm.json.open, uuid)
@@ -12,7 +12,7 @@ To use the mod database in your own mod you need to add it to your dependencies.
 ```json
 {
    "description" : "A mod for testing the Challenge Pack Database mod.",
-   "localId" : "521cbf4e-8901-4741-b6a6-4aee2386339f",
+   "localId" : "todo",
    "name" : "Test",
    "type" : "Blocks and Parts",
    "version" : 0,
