@@ -61,7 +61,7 @@ namespace ChallengeMode.Database
 
             // Initialize HTTP Listener
             HttpListener listener = new();
-            listener.Prefixes.Add("http://*:18251/");
+            listener.Prefixes.Add("https://127.0.0.1:18251/");
             listener.Start();
 
             Task.Run(async () =>
