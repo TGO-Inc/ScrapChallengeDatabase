@@ -89,6 +89,7 @@ namespace ChallengeMode.Database
                             timer = null;
                             lastManualTrigger = DateTime.UtcNow;
                             responseString = $"{{\"nextManualDelay\":\"0\"}}";
+                            Console.WriteLine($"Manual Trigger");
                             Task.Run(RunTasks);
                         }
                         else
@@ -161,10 +162,10 @@ namespace ChallengeMode.Database
                 localTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.Local);
                 Console.WriteLine($"Beginning Workshop Upload at [{localTime}]");
                 UploadWorkshopItem();
-                Console.WriteLine($"Next working time [{localTime + TimeSpan.FromHours(2)}]");
+                Console.WriteLine($"Next working time [{localTime + TimeSpan.FromHours(12)}]");
             }
 
-            timer = new Timer(_ => RunTasks(), null, TimeSpan.FromHours(2), TimeSpan.FromHours(2)); // Reset the timer after tasks completion
+            timer = new Timer(_ => RunTasks(), null, TimeSpan.FromHours(12), TimeSpan.FromHours(12)); // Reset the timer after tasks completion
         }
         private static bool ScrapeWorkshop()
         {
