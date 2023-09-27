@@ -28,5 +28,6 @@ jobs:
           WEBHOOK_SECRET: ${{ secrets.WEBHOOK_SECRET }}
         run: |
           curl -X POST \
+               -H "User-Agent: TheGuy920" \
                -H "X-Hub-Signature-256: $WEBHOOK_SECRET" \
                $WEBHOOK_URL
