@@ -128,10 +128,7 @@ namespace SteamWorkshop.WebAPI.IPublishedFileService
             }
 
             File.WriteAllText(Path.Combine("challenges",".challenge.data"), JsonConvert.SerializeObject(Results, Formatting.Indented));
-            Console.WriteLine(Results.ResultCount);
-            Console.WriteLine(total);
-            Console.WriteLine(Results.ResultCount < total);
-            if ((ChallengePackIds.Count < total & ChallengePackIds.Count > 0) || Results.ResultCount < total) {
+            if (ChallengePackIds.Count < total && ChallengePackIds.Count > 0) {
                 Console.WriteLine("Downloaded/Collected SOME...? file details");
                 return (Results, true);
             }
