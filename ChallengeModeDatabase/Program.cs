@@ -76,20 +76,25 @@ namespace ChallengeMode.Database
 
                     string responseString;
                     var nextTriggerAllowedIn = (lastManualTrigger + manualTriggerInterval - DateTime.UtcNow).TotalSeconds;
-
-                    if (hasUpdateQuery && nextTriggerAllowedIn <= 0 && timer != null)
+                    if (hasUpdateQuery)
                     {
-                        timer.Change(Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan); // Stop the timer
-                        timer.Dispose();
-                        timer = null;
-                        lastManualTrigger = DateTime.UtcNow;
                         responseString = $"<script>window.location.href=window.location.protocol + \"//\" + window.location.host</script>";
-
-                        Task.Run(RunTasks);
                     }
                     else
                     {
-                        responseString = $"{{\"nextManualDelay\":\"{Math.Max(nextTriggerAllowedIn, 0)}\"}}";
+                        if (nextTriggerAllowedIn <= 0 && timer != null)
+                        {
+                            timer.Change(Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan); // Stop the timer
+                            timer.Dispose();
+                            timer = null;
+                            lastManualTrigger = DateTime.UtcNow;
+                            responseString = $"{{\"nextManualDelay\":\"0\"}}";
+                            Task.Run(RunTasks);
+                        }
+                        else
+                        {
+                            responseString = $"{{\"nextManualDelay\":\"{Math.Max(nextTriggerAllowedIn, 0)}\"}}";
+                        }
                     }
 
                     byte[] buffer = Encoding.UTF8.GetBytes(responseString);
