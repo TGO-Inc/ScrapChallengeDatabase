@@ -82,9 +82,10 @@ namespace ChallengeMode.Database
                         timer.Change(Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan); // Stop the timer
                         timer.Dispose();
                         timer = null;
-                        RunTasks(); // Run the tasks manually
                         lastManualTrigger = DateTime.UtcNow;
                         responseString = $"{{\"nextManualDelay\":\"0\"}}";
+
+                        Task.Run(RunTasks);
                     }
                     else
                     {
