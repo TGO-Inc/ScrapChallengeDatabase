@@ -26,6 +26,9 @@ namespace ChallengeMode.Database
         private static string startCmd = string.Empty;
         private static string lastHash = string.Empty;
         private static readonly string workshopVdfPath = "item_$1.vdf";
+        private static DateTime lastManualTrigger = DateTime.MinValue;
+        private static TimeSpan manualTriggerInterval = TimeSpan.FromMinutes(30);
+        private static Timer timer = null;
         public static async Task Main(string[] _)
         {
             ServicePointManager.DefaultConnectionLimit = 1000;
@@ -56,10 +59,45 @@ namespace ChallengeMode.Database
                 startCmd = "/bin/bash";
             }
 
-            CancellationTokenSource cts = new();
+            // Initialize HTTP Listener
+            HttpListener listener = new();
+            listener.Prefixes.Add("http://*:18251/");
+            listener.Start();
 
-            // Timer to run ScrapeWorkshop every 12 hours
-            Timer timer = new(async _ =>
+            Task.Run(async () =>
+            {
+                while (true)
+                {
+                    var context = await listener.GetContextAsync();
+                    var response = context.Response;
+                    string responseString;
+                    var nextTriggerAllowedIn = (lastManualTrigger + manualTriggerInterval - DateTime.UtcNow).TotalSeconds;
+
+                    if (nextTriggerAllowedIn <= 0 && timer != null)
+                    {
+                        timer.Change(Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan); // Stop the timer
+                        timer.Dispose();
+                        timer = null;
+                        RunTasks(); // Run the tasks manually
+                        lastManualTrigger = DateTime.UtcNow;
+                        responseString = $"{{\"nextManualDelay\":\"0\"}}";
+                    }
+                    else
+                    {
+                        responseString = $"{{\"nextManualDelay\":\"{Math.Max(nextTriggerAllowedIn, 0)}\"}}";
+                    }
+
+                    byte[] buffer = Encoding.UTF8.GetBytes(responseString);
+                    response.ContentLength64 = buffer.Length;
+                    var output = response.OutputStream;
+                    await output.WriteAsync(buffer, 0, buffer.Length);
+                    output.Close();
+                }
+            });
+
+            CancellationTokenSource cts = new();
+            // Timer to run ScrapeWorkshop every 4 hours
+            /*Timer timer0 = new(async _ =>
             {
                 lock (SyncLock)
                 {
@@ -70,9 +108,11 @@ namespace ChallengeMode.Database
                     }
                     Console.WriteLine($"Begining Workshop Upload at [{DateTime.UtcNow}]");
                     UploadWorkshopItem();
-                    Console.WriteLine($"Next working time [{DateTime.UtcNow + TimeSpan.FromSeconds(120)}]");
+                    Console.WriteLine($"Next working time [{DateTime.UtcNow + TimeSpan.FromHours(4)}]");
                 }
-            }, null, TimeSpan.Zero, TimeSpan.FromSeconds(120));
+            }, null, TimeSpan.Zero, TimeSpan.FromHours(4));*/
+
+            RunTasks(); // Initial run
 
             // Wait for a cancellation request (e.g. user pressing Ctrl+C)
             Console.CancelKeyPress += (sender, e) =>
@@ -91,13 +131,28 @@ namespace ChallengeMode.Database
 
                 lock (SyncLock)
                 {
-                    // Dispose of the timer and perform final tasks
-                    timer.Dispose();
-                    // end
+                    // Dispose and perform final tasks
+                    listener.Abort();
                     Console.WriteLine($"Program Terminated at [{DateTime.UtcNow}]");
                     Environment.Exit(0);
                 }
             }
+        }
+        private static void RunTasks()
+        {
+            lock (SyncLock)
+            {
+                Console.WriteLine($"Beginning Workshop Collection at [{DateTime.UtcNow}]");
+                while (ScrapeWorkshop())
+                {
+                    Task.Delay(1000).Wait();
+                }
+                Console.WriteLine($"Beginning Workshop Upload at [{DateTime.UtcNow}]");
+                UploadWorkshopItem();
+                Console.WriteLine($"Next working time [{DateTime.UtcNow + TimeSpan.FromHours(2)}]");
+            }
+
+            timer = new Timer(_ => RunTasks(), null, TimeSpan.FromHours(2), TimeSpan.FromHours(2)); // Reset the timer after tasks completion
         }
         private static bool ScrapeWorkshop()
         {
