@@ -133,7 +133,7 @@ namespace ChallengeMode.Database
                 {
                     // Dispose and perform final tasks
                     listener.Abort();
-                    Console.WriteLine($"Program Terminated at [{DateTime.UtcNow}]");
+                    Console.WriteLine($"Program Terminated at [{TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.Local)}]");
                     Environment.Exit(0);
                 }
             }
@@ -142,14 +142,16 @@ namespace ChallengeMode.Database
         {
             lock (SyncLock)
             {
-                Console.WriteLine($"Beginning Workshop Collection at [{DateTime.UtcNow}]");
+                DateTime localTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.Local);
+                Console.WriteLine($"Beginning Workshop Collection at [{localTime}]");
                 while (ScrapeWorkshop())
                 {
                     Task.Delay(1000).Wait();
                 }
-                Console.WriteLine($"Beginning Workshop Upload at [{DateTime.UtcNow}]");
+                localTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.Local);
+                Console.WriteLine($"Beginning Workshop Upload at [{localTime}]");
                 UploadWorkshopItem();
-                Console.WriteLine($"Next working time [{DateTime.UtcNow + TimeSpan.FromHours(2)}]");
+                Console.WriteLine($"Next working time [{localTime + TimeSpan.FromHours(2)}]");
             }
 
             timer = new Timer(_ => RunTasks(), null, TimeSpan.FromHours(2), TimeSpan.FromHours(2)); // Reset the timer after tasks completion
