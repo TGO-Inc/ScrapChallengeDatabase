@@ -70,10 +70,14 @@ namespace ChallengeMode.Database
                 {
                     var context = await listener.GetContextAsync();
                     var response = context.Response;
+
+                    var request = context.Request;
+                    var hasUpdateQuery = request.QueryString["update"] != null;
+
                     string responseString;
                     var nextTriggerAllowedIn = (lastManualTrigger + manualTriggerInterval - DateTime.UtcNow).TotalSeconds;
 
-                    if (nextTriggerAllowedIn <= 0 && timer != null)
+                    if (hasUpdateQuery && nextTriggerAllowedIn <= 0 && timer != null)
                     {
                         timer.Change(Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan); // Stop the timer
                         timer.Dispose();
