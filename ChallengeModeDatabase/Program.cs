@@ -249,31 +249,22 @@ namespace ChallengeMode.Database
         }
         private static void UploadWorkshopItem()
         {
-            if (lastHash != ComputeDirectoryHash("Mod", out string newHash))
+            ProcessStartInfo psi = new(startCmd, command)
             {
-                lastHash = newHash;
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
 
-                ProcessStartInfo psi = new(startCmd, command)
-                {
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                };
+            using Process process = new() { StartInfo = psi };
+            process.OutputDataReceived += (sender, e) => Console.WriteLine(e.Data);
+            process.ErrorDataReceived += (sender, e) => Console.Error.WriteLine(e.Data);
 
-                using Process process = new() { StartInfo = psi };
-                process.OutputDataReceived += (sender, e) => Console.WriteLine(e.Data);
-                process.ErrorDataReceived += (sender, e) => Console.Error.WriteLine(e.Data);
-
-                process.Start();
-                process.BeginOutputReadLine();
-                process.BeginErrorReadLine();
-                process.WaitForExit();
-            }
-            else
-            {
-                Console.WriteLine("No Change In Content. Skipping workshop update!");
-            }
+            process.Start();
+            process.BeginOutputReadLine();
+            process.BeginErrorReadLine();
+            process.WaitForExit();
         }
 
         private static string ComputeDirectoryHash(string directoryPath, out string ovar)
