@@ -83,7 +83,7 @@ namespace ChallengeMode.Database
                         timer.Dispose();
                         timer = null;
                         lastManualTrigger = DateTime.UtcNow;
-                        responseString = $"{{\"nextManualDelay\":\"0\"}}";
+                        responseString = $"<script>window.location.href=window.location.protocol + \"//\" + window.location.host</script>";
 
                         Task.Run(RunTasks);
                     }
