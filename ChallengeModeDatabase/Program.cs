@@ -29,7 +29,7 @@ namespace ChallengeMode.Database
         private static DateTime lastManualTrigger = DateTime.MinValue;
         private static TimeSpan manualTriggerInterval = TimeSpan.FromMinutes(30);
         private static Timer timer = null;
-        public static async Task Main(string[] _)
+        public static async Task Main()
         {
             ServicePointManager.DefaultConnectionLimit = 1000;
             ServicePointManager.MaxServicePoints = 1000;
@@ -64,7 +64,7 @@ namespace ChallengeMode.Database
             listener.Prefixes.Add("http://127.0.0.1:18251/");
             listener.Start();
 
-            Task.Run(async () =>
+            _ = Task.Run(async () =>
             {
                 while (true)
                 {
