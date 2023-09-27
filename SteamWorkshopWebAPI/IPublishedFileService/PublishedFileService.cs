@@ -80,8 +80,10 @@ namespace SteamWorkshop.WebAPI.IPublishedFileService
                 else
                     ChallengePackIds.Add(Response._PublishedFileDetails);
 
-                Console.WriteLine($"Downloaded: {ChallengePackIds.Count} / {Response.Total}");
+                //Console.WriteLine($"Downloaded: {ChallengePackIds.Count} / {Response.Total}");
             });
+
+            Console.WriteLine($"Downloaded: {ChallengePackIds.Count} / {total}");
 
             var Results
                 = new ISteamRemoteStorage.PublishedFileDetailsQuery(
