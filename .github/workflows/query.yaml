@@ -1,0 +1,20 @@
+name: Query Workflow
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:      
+      - name: Trigger Webhook
+        env:
+          WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
+          WEBHOOK_SECRET: ${{ secrets.WEBHOOK_SECRET }}
+        run: |
+          curl -X POST \
+               -H "X-Hub-Signature-256: $WEBHOOK_SECRET" \
+               $WEBHOOK_URL
