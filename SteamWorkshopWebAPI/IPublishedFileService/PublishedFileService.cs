@@ -57,19 +57,19 @@ namespace SteamWorkshop.WebAPI.IPublishedFileService
             
             if (File.Exists(Path.Combine("challenges",".steam.ids")))
                 old = JsonConvert.DeserializeObject<List<string>>(File.ReadAllText(Path.Combine("challenges",".steam.ids")))!;
-            
-            ManagedArray<PublishedFileDetailsQuery.PublishedFileDetails> ChallengePackIds = null;
 
             int total = Request<PublishedFileDetailsQuery>(QueryString.ToString().Replace($"rpage={query.ResultsPerPage}", "rpage=1")).Total;
             double loop = total / (double)query.ResultsPerPage;
             if (loop > Math.Floor(loop))
                 loop = Math.Floor(loop) + 1;
 
+            ManagedArray<PublishedFileDetailsQuery.PublishedFileDetails> ChallengePackIds = new(total, true);
+
             Parallel.For(1, (int)loop +1, (x, g) =>
             {
                 var Response = Request<PublishedFileDetailsQuery>($"{QueryString}{x}");
 
-                ChallengePackIds ??= new(Response.Total, true);
+                // ChallengePackIds ??= new(Response.Total, true);
 
                 if (Response._PublishedFileDetails is null) return;
 
