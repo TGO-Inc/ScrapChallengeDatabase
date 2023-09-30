@@ -9,6 +9,7 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Linq;
 using System.Security.Cryptography;
+using System;
 
 namespace ChallengeMode.Database
 {
@@ -27,8 +28,8 @@ namespace ChallengeMode.Database
         private static string lastHash = string.Empty;
         private static readonly string workshopVdfPath = "item_$1.vdf";
         private static DateTime lastManualTrigger = DateTime.MinValue;
-        private static TimeSpan manualTriggerInterval = TimeSpan.FromMinutes(30);
-        private static Timer timer = null;
+        private static readonly TimeSpan manualTriggerInterval = TimeSpan.FromMinutes(30);
+        private static Timer? timer = null;
         public static async Task Main()
         {
             ServicePointManager.DefaultConnectionLimit = 1000;
@@ -94,7 +95,7 @@ namespace ChallengeMode.Database
                     byte[] buffer = Encoding.UTF8.GetBytes(responseString);
                     response.ContentLength64 = buffer.Length;
                     var output = response.OutputStream;
-                    await output.WriteAsync(buffer, 0, buffer.Length);
+                    await output.WriteAsync(buffer);
                     output.Close();
                 }
             });
@@ -249,22 +250,26 @@ namespace ChallengeMode.Database
         }
         private static void UploadWorkshopItem()
         {
-            ProcessStartInfo psi = new(startCmd, command)
+            if (lastHash != ComputeDirectoryHash("Mod", out string nhash))
             {
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
+                lastHash = nhash;
+                ProcessStartInfo psi = new(startCmd, command)
+                {
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
 
-            using Process process = new() { StartInfo = psi };
-            process.OutputDataReceived += (sender, e) => Console.WriteLine(e.Data);
-            process.ErrorDataReceived += (sender, e) => Console.Error.WriteLine(e.Data);
+                using Process process = new() { StartInfo = psi };
+                process.OutputDataReceived += (sender, e) => Console.WriteLine(e.Data);
+                process.ErrorDataReceived += (sender, e) => Console.Error.WriteLine(e.Data);
 
-            process.Start();
-            process.BeginOutputReadLine();
-            process.BeginErrorReadLine();
-            process.WaitForExit();
+                process.Start();
+                process.BeginOutputReadLine();
+                process.BeginErrorReadLine();
+                process.WaitForExit();
+            }
         }
 
         private static string ComputeDirectoryHash(string directoryPath, out string ovar)
