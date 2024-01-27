@@ -117,7 +117,7 @@ namespace ChallengeMode.Database
 
             CancellationTokenSource cts = new();
 
-            var content = $"{{\"content\":\"Scrapbot booted\"}}";
+            var content = $"{{\"content\":\"Scrapbot booted\", \"flags\": 2}}";
             await _httpClient.PostAsync(webhook_uri[0], new StringContent(content, MediaTypeHeaderValue.Parse("application/json")));
 
             // Initial run
@@ -158,7 +158,7 @@ namespace ChallengeMode.Database
             {
                 Apps.TryGetValue(app.ID, out var appName);
                 var content =
-                    $"{{\"content\":\"New Steam PICS Change for App `{appName} ({app.ID})` | https://steamdb.info/app/{app.ID}/history/?changeid={app.ChangeNumber}\"}}";
+                    $"{{\"content\":\"New Steam PICS Change for App `{appName} ({app.ID})` | https://steamdb.info/app/{app.ID}/history/?changeid={app.ChangeNumber}\", \"flags\": 2}}}}";
                 foreach (var url in webhook_uri)
                     await _httpClient.PostAsync(url, new StringContent(content, MediaTypeHeaderValue.Parse("application/json")));
             }
