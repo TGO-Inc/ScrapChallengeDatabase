@@ -6,6 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <StartupObject>SteamWorkshopScraper.WorkshopScraper</StartupObject>
+    <Configurations>Debug;Release;Debug BOT</Configurations>
   </PropertyGroup>
 
   <ItemGroup>

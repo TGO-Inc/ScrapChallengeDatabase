@@ -398,3 +398,4 @@ FodyWeavers.xsd
 *.sln.iml
 priv.password
 priv.key
+ChallengeModeDatabase/webhook.url

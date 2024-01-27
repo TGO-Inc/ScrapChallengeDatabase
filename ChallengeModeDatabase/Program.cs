@@ -10,6 +10,10 @@ using System.Runtime.InteropServices;
 using System.Linq;
 using System.Security.Cryptography;
 using System;
+using SteamKit2;
+using Steamworks;
+using System.Net.Http.Headers;
+using System.Net.Http;
 
 namespace ChallengeMode.Database
 {
@@ -30,6 +34,14 @@ namespace ChallengeMode.Database
         private static DateTime lastManualTrigger = DateTime.MinValue;
         private static readonly TimeSpan manualTriggerInterval = TimeSpan.FromMinutes(30);
         private static Timer? timer = null;
+
+        private static string[] webhook_uri = File.ReadLines("webhook.url").ToArray();
+        private static uint _lastChangeNumber;
+        private static readonly HttpClient _httpClient = new();
+        private static readonly Dictionary<uint, string> Apps = new() {
+            {387990, "Scrap Mechanic"},
+            {588870, "Scrap Mechanic Mod Tool"}
+        };
         public static async Task Main()
         {
             ServicePointManager.DefaultConnectionLimit = 1000;
@@ -64,6 +76,9 @@ namespace ChallengeMode.Database
             HttpListener listener = new();
             listener.Prefixes.Add("http://127.0.0.1:18251/");
             listener.Start();
+            var dltool = new DownloadTool(USERNAME, PASSWORD, 387990);
+
+            dltool.Steam3.OnPICSChanges += PICSChanges;
 
             _ = Task.Run(async () =>
             {
@@ -85,7 +100,7 @@ namespace ChallengeMode.Database
                         lastManualTrigger = DateTime.UtcNow;
                         responseString = $"<script>window.location.href=window.location.protocol + \"//\" + window.location.host</script>";
                         Console.WriteLine($"Manual Trigger");
-                        Task.Run(RunTasks);
+                        Task.Run(() => RunTasks(dltool));
                     }
                     else
                     {
@@ -101,24 +116,9 @@ namespace ChallengeMode.Database
             });
 
             CancellationTokenSource cts = new();
-            // Timer to run ScrapeWorkshop every 4 hours
-            /*Timer timer0 = new(async _ =>
-            {
-                lock (SyncLock)
-                {
-                    Console.WriteLine($"Begining Workshop Collection at [{DateTime.UtcNow}]");
-                    while (ScrapeWorkshop())
-                    {
-                        Task.Delay(1000).Wait();
-                    }
-                    Console.WriteLine($"Begining Workshop Upload at [{DateTime.UtcNow}]");
-                    UploadWorkshopItem();
-                    Console.WriteLine($"Next working time [{DateTime.UtcNow + TimeSpan.FromHours(4)}]");
-                }
-            }, null, TimeSpan.Zero, TimeSpan.FromHours(4));*/
 
             // Initial run
-            RunTasks();
+            RunTasks(dltool);
 
             // Wait for a cancellation request (e.g. user pressing Ctrl+C)
             Console.CancelKeyPress += (sender, e) =>
@@ -144,13 +144,34 @@ namespace ChallengeMode.Database
                 }
             }
         }
-        private static void RunTasks()
+
+        private static async void PICSChanges(SteamKit2.SteamApps.PICSChangesCallback callback)
         {
+            if (callback.LastChangeNumber == callback.CurrentChangeNumber) return;
+            if (callback.CurrentChangeNumber > _lastChangeNumber) _lastChangeNumber = callback.CurrentChangeNumber;
+            var apps = callback.AppChanges.Where(app => Apps.ContainsKey(app.Value.ID)).ToArray();
+            if (apps.Length <= 0) return;
+            foreach (var (_, app) in apps)
+            {
+                Apps.TryGetValue(app.ID, out var appName);
+                var content =
+                    $"{{\"content\":\"New Steam PICS Change for App `{appName} ({app.ID})` | https://steamdb.info/app/{app.ID}/history/?changeid={app.ChangeNumber}\"}}";
+                foreach (var url in webhook_uri)
+                    await _httpClient.PostAsync(url, new StringContent(content, MediaTypeHeaderValue.Parse("application/json")));
+            }
+        }
+
+        private static void RunTasks(DownloadTool dltool)
+        {
+#if TEST_BOT
+            return;
+#endif
+
             lock (SyncLock)
             {
                 DateTime localTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.Local);
                 Console.WriteLine($"Beginning Workshop Collection at [{localTime}]");
-                while (ScrapeWorkshop())
+                while (ScrapeWorkshop(dltool))
                 {
                     Task.Delay(1000).Wait();
                 }
@@ -160,9 +181,9 @@ namespace ChallengeMode.Database
                 Console.WriteLine($"Next working time [{localTime + TimeSpan.FromHours(12)}]");
             }
 
-            timer = new Timer(_ => RunTasks(), null, TimeSpan.FromHours(12), TimeSpan.FromHours(12)); // Reset the timer after tasks completion
+            timer = new Timer(_ => RunTasks(dltool), null, TimeSpan.FromHours(12), TimeSpan.FromHours(12)); // Reset the timer after tasks completion
         }
-        private static bool ScrapeWorkshop()
+        private static bool ScrapeWorkshop(DownloadTool dltool)
         {
             var sqtime = DateTime.Now;
             var iFileService = new PublishedFileService(STEAM_API_KEY);
@@ -174,7 +195,7 @@ namespace ChallengeMode.Database
             
             var start = DateTime.Now;
             int counter = 0;
-            var dltool = new DownloadTool(USERNAME, PASSWORD, 387990);
+            
             var membag = new ConcurrentBag<KeyValuePair<string, byte[]>>();
             var failedbag = new ConcurrentBag<string>();
             Console.WriteLine($"Downloading...");

@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
+using System.Net.Http.Headers;
+using System.Net.Http;
 using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
@@ -11,10 +13,16 @@ using SteamKit2;
 using SteamKit2.Authentication;
 using SteamKit2.Internal;
 using SteamWorkshop.WebAPI;
+using static SteamKit2.Internal.CCloud_EnumerateUserApps_Response;
+using static SteamKit2.SteamApps.PICSChangesCallback;
+using System.Reflection;
+using static SteamKit2.Internal.CMsgClientPICSChangesSinceResponse;
+using static SteamKit2.SteamApps;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace SteamWorkshop.WebAPI.Internal
 {
-    internal class Steam3Session
+    public class Steam3Session
     {
         public class Credentials
         {
@@ -73,6 +81,9 @@ namespace SteamWorkshop.WebAPI.Internal
 
         static readonly TimeSpan STEAM3_TIMEOUT = TimeSpan.FromSeconds(30);
 
+        public delegate void OnPICSChanged(SteamApps.PICSChangesCallback cb);
+        public event OnPICSChanged? OnPICSChanges;
+
         public Steam3Session(SteamUser.LogOnDetails details)
         {
             this.logonDetails = details;
@@ -117,6 +128,8 @@ namespace SteamWorkshop.WebAPI.Internal
             this.callbacks.Subscribe<SteamApps.LicenseListCallback>(LicenseListCallback);
             this.callbacks.Subscribe<SteamUser.UpdateMachineAuthCallback>(UpdateMachineAuthCallback);
 
+            this.callbacks.Subscribe<SteamApps.PICSChangesCallback>(PICSChanged);
+
             Console.WriteLine("Connecting to Steam3...");
 
             this.SentryData = new();
@@ -124,6 +137,11 @@ namespace SteamWorkshop.WebAPI.Internal
             this.LoginTokens = new();
 
             this.Connect();
+        }
+
+        private void PICSChanged(PICSChangesCallback callback)
+        {
+            this.OnPICSChanges?.Invoke(callback);
         }
 
         public delegate bool WaitCondition();
@@ -413,7 +431,7 @@ namespace SteamWorkshop.WebAPI.Internal
                     {
                         Console.Write("Please enter your 2 factor auth code from your authenticator app: ");
                         this.logonDetails.TwoFactorCode = Console.ReadLine();
-                    } while (String.Empty == this.logonDetails.TwoFactorCode);
+                    } while (string.Empty == this.logonDetails.TwoFactorCode);
                 }
                 else if (isAccessToken)
                 {

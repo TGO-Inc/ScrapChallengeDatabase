@@ -6,7 +6,7 @@ namespace SteamWorkshop.WebAPI
 {
     public class DownloadTool
     {
-        private readonly Steam3Session Steam3;
+        public readonly Steam3Session Steam3;
         private readonly CDNClientPool CDNClientPool;
         private readonly Server CDNConnection;
         public DownloadTool(string username, string password, uint appid)
