@@ -117,6 +117,9 @@ namespace ChallengeMode.Database
 
             CancellationTokenSource cts = new();
 
+            var content = $"{{\"content\":\"Scrapbot booted\"}}";
+            await _httpClient.PostAsync(webhook_uri[0], new StringContent(content, MediaTypeHeaderValue.Parse("application/json")));
+
             // Initial run
             RunTasks(dltool);
 
