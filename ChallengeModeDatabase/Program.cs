@@ -41,8 +41,7 @@ namespace ChallengeMode.Database
         private static readonly HttpClient _httpClient = new();
         private static readonly Dictionary<uint, string> Apps = new() {
             {387990, "Scrap Mechanic"},
-            {588870, "Scrap Mechanic Mod Tool"},
-            {2528270, "TinkerTech Playtest" }
+            {588870, "Scrap Mechanic Mod Tool"}
         };
         public static async Task Main()
         {
