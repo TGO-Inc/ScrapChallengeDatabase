@@ -41,7 +41,7 @@ namespace ChallengeMode.Database
         private static readonly Dictionary<uint, string> Apps = new() {
             {387990, "Scrap Mechanic"},
             {588870, "Scrap Mechanic Mod Tool"},
-            {2172970, "Lorne Demo" }
+            {2528270, "TinkerTech Playtest" }
         };
         public static async Task Main()
         {
