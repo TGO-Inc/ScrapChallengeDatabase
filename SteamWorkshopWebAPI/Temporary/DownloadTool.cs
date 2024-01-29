@@ -8,8 +8,8 @@ namespace SteamWorkshop.WebAPI
     {
         private readonly uint appid;
         public readonly Steam3Session Steam3;
-        private readonly CDNClientPool CDNClientPool;
-        private readonly Server CDNConnection;
+        private CDNClientPool CDNClientPool;
+        private Server CDNConnection;
         public DownloadTool(string username, string password, uint appid)
         {
             this.appid = appid;
@@ -20,12 +20,13 @@ namespace SteamWorkshop.WebAPI
                 ShouldRememberPassword = true,
                 LoginID = 0x534B32
             });
-            this.CDNClientPool = new(this.Steam3, appid);
-            this.CDNConnection = this.CDNClientPool.GetConnection(new());
+            
         }
         public void Init()
         {
             this.Steam3.Connect();
+            this.CDNClientPool = new(this.Steam3, appid);
+            this.CDNConnection = this.CDNClientPool.GetConnection(new());
             this.Steam3.RequestDepotKey(this.appid, this.appid);
         }
         public DepotManifest DownloadManifest(uint depotid, uint appid, ulong manifestid)

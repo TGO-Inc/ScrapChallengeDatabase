@@ -77,14 +77,14 @@ namespace ChallengeMode.Database
             HttpListener listener = new();
             listener.Prefixes.Add("http://127.0.0.1:18251/");
             listener.Start();
-            var dltool = new DownloadTool(USERNAME, PASSWORD, 387990);
 
+            var dltool = new DownloadTool(USERNAME, PASSWORD, 387990);
             dltool.Steam3.OnPICSChanges += PICSChanges;
             
             _steam_pics_timer = new Timer((state) =>
             {
                 dltool.Steam3.steamApps.PICSGetChangesSince(_lastChangeNumber, true, true);
-            }, null, TimeSpan.MaxValue, TimeSpan.MaxValue);
+            }, null, Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
 
             dltool.Steam3.OnClientsLogin += (logon) =>
             {
@@ -93,9 +93,8 @@ namespace ChallengeMode.Database
 
             dltool.Steam3.OnClientsDisconnect += (disconnect) =>
             {
-                _steam_pics_timer.Change(TimeSpan.MaxValue, TimeSpan.MaxValue);
+                _steam_pics_timer.Change(Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
             };
-
             dltool.Init();
 
             _ = Task.Run(async () =>
