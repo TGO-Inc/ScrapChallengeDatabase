@@ -120,7 +120,7 @@ namespace ChallengeMode.Database
 
             var content =
                 $"{{\"content\":\"Scrapbot booted.\\nTracking:\\n```\\n{
-                    JsonConvert.SerializeObject(Apps, Formatting.Indented).Replace("\n", "\\n")
+                    JsonConvert.SerializeObject(Apps, Formatting.Indented).Replace("\"", "\\\"").Replace("\n", "\\n")
                     }\\n```\", \"flags\": 2}}";
             Console.WriteLine($"Content: {content}");
             foreach (var url in webhook_uri)
