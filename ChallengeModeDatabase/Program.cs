@@ -119,7 +119,10 @@ namespace ChallengeMode.Database
 
             var content = $"{{\"content\":\"Scrapbot booted\", \"flags\": 2}}";
             foreach (var url in webhook_uri)
+            {
+                Console.WriteLine($"Loaded webhook: {url}");
                 await _httpClient.PostAsync(url, new StringContent(content, MediaTypeHeaderValue.Parse("application/json")));
+            }
 
             // Initial run
             RunTasks(dltool);
