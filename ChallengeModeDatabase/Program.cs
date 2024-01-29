@@ -135,7 +135,7 @@ namespace ChallengeMode.Database
             CancellationTokenSource cts = new();
 
             var content =
-                $"{{\"content\":\"Scrapbot booted.\\nTracking:\\n```\\n{
+                $"{{\"content\":\"SteamDB tracker started for:\\n```\\n{
                     JsonConvert.SerializeObject(Apps, Formatting.Indented).Replace("\"", "\\\"").Replace("\n", "\\n")
                     }\\n```\", \"flags\": 2}}";
             Console.WriteLine($"Content: {content}");
