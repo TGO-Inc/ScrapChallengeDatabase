@@ -119,9 +119,9 @@ namespace ChallengeMode.Database
             CancellationTokenSource cts = new();
 
             var content =
-                $"{{\"content\":\"Scrapbot booted.\\nTracking:\\n{
-                    JsonConvert.SerializeObject(Apps, Formatting.Indented).Replace("\"", "`").Replace("\n", "\\n")
-                    } \", \"flags\": 2}}";
+                $"{{\"content\":\"Scrapbot booted.\\nTracking:\\n```\\n{
+                    JsonConvert.SerializeObject(Apps, Formatting.Indented).Replace("\n", "\\n")
+                    }\\n```\", \"flags\": 2}}";
             Console.WriteLine($"Content: {content}");
             foreach (var url in webhook_uri)
             {
