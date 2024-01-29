@@ -118,7 +118,8 @@ namespace ChallengeMode.Database
             CancellationTokenSource cts = new();
 
             var content = $"{{\"content\":\"Scrapbot booted\", \"flags\": 2}}";
-            await _httpClient.PostAsync(webhook_uri[0], new StringContent(content, MediaTypeHeaderValue.Parse("application/json")));
+            foreach (var url in webhook_uri)
+                await _httpClient.PostAsync(url, new StringContent(content, MediaTypeHeaderValue.Parse("application/json")));
 
             // Initial run
             RunTasks(dltool);
@@ -150,6 +151,8 @@ namespace ChallengeMode.Database
 
         private static async void PICSChanges(SteamKit2.SteamApps.PICSChangesCallback callback)
         {
+            Console.WriteLine("PICS Change Update recieved");
+            Console.WriteLine(JsonConvert.SerializeObject(callback, Formatting.Indented));
             if (callback.LastChangeNumber == callback.CurrentChangeNumber) return;
             if (callback.CurrentChangeNumber > _lastChangeNumber) _lastChangeNumber = callback.CurrentChangeNumber;
             var apps = callback.AppChanges.Where(app => Apps.ContainsKey(app.Value.ID)).ToArray();
@@ -158,7 +161,7 @@ namespace ChallengeMode.Database
             {
                 Apps.TryGetValue(app.ID, out var appName);
                 var content =
-                    $"{{\"content\":\"New Steam PICS Change for App `{appName} ({app.ID})`\nhttps://steamdb.info/app/{app.ID}/history/?changeid={app.ChangeNumber}\", \"flags\": 2}}}}";
+                    $"{{\"content\":\"New SteamDB Change for App `{appName} ({app.ID})`\nhttps://steamdb.info/app/{app.ID}/history/?changeid={app.ChangeNumber}\", \"flags\": 2}}}}";
                 foreach (var url in webhook_uri)
                     await _httpClient.PostAsync(url, new StringContent(content, MediaTypeHeaderValue.Parse("application/json")));
             }
