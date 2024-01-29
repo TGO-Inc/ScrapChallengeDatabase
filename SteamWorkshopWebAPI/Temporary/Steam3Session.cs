@@ -135,13 +135,11 @@ namespace SteamWorkshop.WebAPI.Internal
             this.callbacks.Subscribe<SteamUser.UpdateMachineAuthCallback>(UpdateMachineAuthCallback);
             this.callbacks.Subscribe<SteamApps.PICSChangesCallback>(PICSChanged);
 
-            Console.WriteLine("Connecting to Steam3...");
-
             this.SentryData = new();
             this.ContentServerPenalty = new();
             this.LoginTokens = new();
 
-            this.Connect();
+            //this.Connect();
         }
 
         private void PICSChanged(PICSChangesCallback callback)
@@ -237,8 +235,10 @@ namespace SteamWorkshop.WebAPI.Internal
             this.bIsConnectionRecovery = false;
         }
 
-        void Connect()
+        public void Connect()
         {
+            Console.WriteLine("Connecting to Steam3...");
+
             this.bAborted = false;
             this.bConnected = false;
             this.bConnecting = true;

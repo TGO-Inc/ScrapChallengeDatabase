@@ -26,6 +26,7 @@ namespace SteamWorkshopScraper
 
             int counter = 0;
             var dltool = new DownloadTool(USERNAME, PASSWORD, 387990);
+            dltool.Init();
             var membag = new ConcurrentBag<KeyValuePair<string, byte[]>>();
             var failedbag = new ConcurrentBag<string>();
 

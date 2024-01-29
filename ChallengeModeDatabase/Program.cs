@@ -96,6 +96,7 @@ namespace ChallengeMode.Database
                 _steam_pics_timer.Change(TimeSpan.MaxValue, TimeSpan.MaxValue);
             };
 
+            dltool.Init();
 
             _ = Task.Run(async () =>
             {
