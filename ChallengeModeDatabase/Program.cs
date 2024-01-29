@@ -40,7 +40,8 @@ namespace ChallengeMode.Database
         private static readonly HttpClient _httpClient = new();
         private static readonly Dictionary<uint, string> Apps = new() {
             {387990, "Scrap Mechanic"},
-            {588870, "Scrap Mechanic Mod Tool"}
+            {588870, "Scrap Mechanic Mod Tool"},
+            {2172970, "Lorne Demo" }
         };
         public static async Task Main()
         {
@@ -117,7 +118,7 @@ namespace ChallengeMode.Database
 
             CancellationTokenSource cts = new();
 
-            var content = $"{{\"content\":\"Scrapbot booted\", \"flags\": 2}}";
+            var content = $"{{\"content\":\"Scrapbot booted. Tracking: [{JsonConvert.SerializeObject(Apps).Replace("\"", "`")}] \", \"flags\": 2}}";
             foreach (var url in webhook_uri)
             {
                 Console.WriteLine($"Loaded webhook: {url}");
