@@ -23,10 +23,9 @@ namespace SteamWorkshop.WebAPI
             this.CDNClientPool = new(this.Steam3, appid);
             this.CDNConnection = this.CDNClientPool.GetConnection(new());
         }
-        public void Init(bool connect = true)
+        public void Init()
         {
-            if (connect)
-                this.Steam3.Connect();
+            this.Steam3.Connect();
             this.Steam3.RequestDepotKey(this.appid, this.appid);
         }
         public DepotManifest DownloadManifest(uint depotid, uint appid, ulong manifestid)
