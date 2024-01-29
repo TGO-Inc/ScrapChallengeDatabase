@@ -34,6 +34,7 @@ namespace ChallengeMode.Database
         private static DateTime lastManualTrigger = DateTime.MinValue;
         private static readonly TimeSpan manualTriggerInterval = TimeSpan.FromMinutes(30);
         private static Timer? timer = null;
+        private static Timer _steam_pics_timer;
 
         private static string[] webhook_uri = File.ReadLines("webhook.url").ToArray();
         private static uint _lastChangeNumber;
@@ -80,6 +81,22 @@ namespace ChallengeMode.Database
             var dltool = new DownloadTool(USERNAME, PASSWORD, 387990);
 
             dltool.Steam3.OnPICSChanges += PICSChanges;
+            
+            _steam_pics_timer = new Timer((state) =>
+            {
+                dltool.Steam3.steamApps.PICSGetChangesSince(_lastChangeNumber, true, true);
+            }, null, TimeSpan.MaxValue, TimeSpan.MaxValue);
+
+            dltool.Steam3.OnClientsLogin += (logon) =>
+            {
+                _steam_pics_timer.Change(TimeSpan.Zero, TimeSpan.FromSeconds(2));
+            };
+
+            dltool.Steam3.OnClientsDisconnect += (disconnect) =>
+            {
+                _steam_pics_timer.Change(TimeSpan.MaxValue, TimeSpan.MaxValue);
+            };
+
 
             _ = Task.Run(async () =>
             {

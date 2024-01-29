@@ -55,7 +55,7 @@ namespace SteamWorkshop.WebAPI.Internal
         public SteamClient steamClient;
         public SteamUser steamUser;
         public SteamContent steamContent;
-        readonly SteamApps steamApps;
+        public readonly SteamApps steamApps;
         readonly SteamCloud steamCloud;
         readonly SteamUnifiedMessages.UnifiedService<IPublishedFile> steamPublishedFile;
 
@@ -83,6 +83,12 @@ namespace SteamWorkshop.WebAPI.Internal
 
         public delegate void OnPICSChanged(SteamApps.PICSChangesCallback cb);
         public event OnPICSChanged? OnPICSChanges;
+
+        public delegate void OnClientLogin(SteamUser.LoggedOnCallback logon);
+        public event OnClientLogin? OnClientsLogin;
+
+        public delegate void OnClientDisconnect(SteamClient.DisconnectedCallback disconnect);
+        public event OnClientDisconnect? OnClientsDisconnect;
 
         public Steam3Session(SteamUser.LogOnDetails details)
         {
@@ -127,7 +133,6 @@ namespace SteamWorkshop.WebAPI.Internal
             this.callbacks.Subscribe<SteamUser.SessionTokenCallback>(SessionTokenCallback);
             this.callbacks.Subscribe<SteamApps.LicenseListCallback>(LicenseListCallback);
             this.callbacks.Subscribe<SteamUser.UpdateMachineAuthCallback>(UpdateMachineAuthCallback);
-
             this.callbacks.Subscribe<SteamApps.PICSChangesCallback>(PICSChanged);
 
             Console.WriteLine("Connecting to Steam3...");
@@ -384,6 +389,8 @@ namespace SteamWorkshop.WebAPI.Internal
 
                 // Any operations outstanding need to be aborted
                 this.bAborted = true;
+
+                this.OnClientsDisconnect.Invoke(disconnected);
             }
             else if (this.connectionBackoff >= 10)
             {
@@ -484,6 +491,8 @@ namespace SteamWorkshop.WebAPI.Internal
             }
 
             Console.WriteLine("Logged In");
+
+            this.OnClientsLogin.Invoke(loggedOn);
 
             this.seq++;
             this.credentials.LoggedOn = true;
