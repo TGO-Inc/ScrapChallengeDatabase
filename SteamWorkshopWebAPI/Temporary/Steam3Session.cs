@@ -59,7 +59,7 @@ namespace SteamWorkshop.WebAPI.Internal
         readonly SteamCloud steamCloud;
         readonly SteamUnifiedMessages.UnifiedService<IPublishedFile> steamPublishedFile;
 
-        readonly CallbackManager callbacks;
+        public readonly CallbackManager callbacks;
 
         readonly bool authenticatedUser;
         bool bConnected;

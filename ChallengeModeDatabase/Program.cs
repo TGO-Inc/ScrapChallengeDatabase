@@ -43,7 +43,7 @@ namespace ChallengeMode.Database
             {387990, "Scrap Mechanic"},
             {588870, "Scrap Mechanic Mod Tool"}
         };
-        public static async Task Main()
+        public static async Task Main(string[] args)
         {
             ServicePointManager.DefaultConnectionLimit = 1000;
             ServicePointManager.MaxServicePoints = 1000;
@@ -81,9 +81,12 @@ namespace ChallengeMode.Database
             var dltool = new DownloadTool(USERNAME, PASSWORD, 387990);
             dltool.Steam3.OnPICSChanges += PICSChanges;
             
-            _steam_pics_timer = new Timer((state) =>
+            _steam_pics_timer = new Timer(async (state) =>
             {
-                dltool.Steam3.steamApps.PICSGetChangesSince(_lastChangeNumber, true, true);
+                var res = await dltool.Steam3.steamApps.PICSGetChangesSince(_lastChangeNumber, true, true);
+#if RELEASE_VERBOSE
+                Console.WriteLine(JsonConvert.SerializeObject(res, Formatting.Indented));
+#endif
             }, null, Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
 
             dltool.Steam3.OnClientsLogin += (logon) =>
@@ -97,11 +100,20 @@ namespace ChallengeMode.Database
                 Console.WriteLine("Client Disconnected");
                 _steam_pics_timer.Change(Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
             };
+
             dltool.Init();
+
+            CancellationTokenSource cts = new();
+
+            _ = Task.Run(() =>
+            {
+                while (!cts.IsCancellationRequested)
+                    dltool.Steam3.callbacks.RunWaitAllCallbacks(TimeSpan.FromSeconds(5));
+            }, cts.Token);
 
             _ = Task.Run(async () =>
             {
-                while (true)
+                while (!cts.IsCancellationRequested)
                 {
                     var context = await listener.GetContextAsync();
                     var response = context.Response;
@@ -132,15 +144,12 @@ namespace ChallengeMode.Database
                     await output.WriteAsync(buffer);
                     output.Close();
                 }
-            });
+            }, cts.Token);
 
-            CancellationTokenSource cts = new();
-
-            var content =
-                $"{{\"content\":\"SteamDB tracker started for:\\n```\\n{
+            var content = $"{{\"content\":\"SteamDB tracker started for:\\n```\\n{
                     JsonConvert.SerializeObject(Apps, Formatting.Indented).Replace("\"", "\\\"").Replace("\n", "\\n")
                     }\\n```\", \"flags\": 2}}";
-            Console.WriteLine($"Content: {content}");
+
             foreach (var url in webhook_uri)
             {
                 Console.WriteLine($"Loaded webhook: {url}");
@@ -177,12 +186,12 @@ namespace ChallengeMode.Database
 
         private static async void PICSChanges(SteamKit2.SteamApps.PICSChangesCallback callback)
         {
-            Console.WriteLine("PICS Change Update recieved");
-            Console.WriteLine(JsonConvert.SerializeObject(callback, Formatting.Indented));
             if (callback.LastChangeNumber == callback.CurrentChangeNumber) return;
             if (callback.CurrentChangeNumber > _lastChangeNumber) _lastChangeNumber = callback.CurrentChangeNumber;
             var apps = callback.AppChanges.Where(app => Apps.ContainsKey(app.Value.ID)).ToArray();
             if (apps.Length <= 0) return;
+            Console.WriteLine("PICS Change Update recieved");
+            Console.WriteLine(JsonConvert.SerializeObject(callback, Formatting.Indented));
             foreach (var (_, app) in apps)
             {
                 Apps.TryGetValue(app.ID, out var appName);
