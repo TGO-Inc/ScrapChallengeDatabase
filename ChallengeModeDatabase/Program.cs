@@ -88,11 +88,13 @@ namespace ChallengeMode.Database
 
             dltool.Steam3.OnClientsLogin += (logon) =>
             {
+                Console.WriteLine("Client Logged In. Adjusting timer...");
                 _steam_pics_timer.Change(TimeSpan.Zero, TimeSpan.FromSeconds(2));
             };
 
             dltool.Steam3.OnClientsDisconnect += (disconnect) =>
             {
+                Console.WriteLine("Client Disconnected");
                 _steam_pics_timer.Change(Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
             };
             dltool.Init();
