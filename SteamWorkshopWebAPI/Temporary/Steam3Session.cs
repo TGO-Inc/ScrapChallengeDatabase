@@ -1,24 +1,10 @@
-using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.IO;
-using System.Linq;
-using System.Net.Http.Headers;
-using System.Net.Http;
 using System.Security.Cryptography;
-using System.Threading;
-using System.Threading.Tasks;
 using SteamKit2;
 using SteamKit2.Authentication;
 using SteamKit2.Internal;
-using SteamWorkshop.WebAPI;
-using static SteamKit2.Internal.CCloud_EnumerateUserApps_Response;
-using static SteamKit2.SteamApps.PICSChangesCallback;
-using System.Reflection;
-using static SteamKit2.Internal.CMsgClientPICSChangesSinceResponse;
 using static SteamKit2.SteamApps;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace SteamWorkshop.WebAPI.Internal
 {
@@ -35,7 +21,7 @@ namespace SteamWorkshop.WebAPI.Internal
             }
         }
 
-        public ReadOnlyCollection<SteamApps.LicenseListCallback.License> Licenses
+        public ReadOnlyCollection<LicenseListCallback.License>? Licenses
         {
             get;
             private set;
@@ -44,9 +30,9 @@ namespace SteamWorkshop.WebAPI.Internal
         public Dictionary<uint, ulong> AppTokens { get; private set; }
         public Dictionary<uint, ulong> PackageTokens { get; private set; }
         public Dictionary<uint, byte[]> DepotKeys { get; private set; }
-        public ConcurrentDictionary<string, TaskCompletionSource<SteamApps.CDNAuthTokenCallback>> CDNAuthTokens { get; private set; }
-        public Dictionary<uint, SteamApps.PICSProductInfoCallback.PICSProductInfo> AppInfo { get; private set; }
-        public Dictionary<uint, SteamApps.PICSProductInfoCallback.PICSProductInfo> PackageInfo { get; private set; }
+        public ConcurrentDictionary<string, TaskCompletionSource<CDNAuthTokenCallback>> CDNAuthTokens { get; private set; }
+        public Dictionary<uint, PICSProductInfoCallback.PICSProductInfo> AppInfo { get; private set; }
+        public Dictionary<uint, PICSProductInfoCallback.PICSProductInfo> PackageInfo { get; private set; }
         public Dictionary<string, byte[]> AppBetaPasswords { get; private set; }
         public Dictionary<string, byte[]> SentryData { get; private set; }
         public Dictionary<string, string> LoginTokens { get; private set; }
@@ -56,30 +42,29 @@ namespace SteamWorkshop.WebAPI.Internal
         public SteamUser steamUser;
         public SteamContent steamContent;
         public readonly SteamApps steamApps;
-        readonly SteamCloud steamCloud;
-        readonly SteamUnifiedMessages.UnifiedService<IPublishedFile> steamPublishedFile;
+        private readonly SteamCloud steamCloud;
+        private readonly SteamUnifiedMessages.UnifiedService<IPublishedFile> steamPublishedFile;
 
         public readonly CallbackManager callbacks;
 
-        readonly bool authenticatedUser;
-        bool bConnected;
-        bool bConnecting;
-        bool bAborted;
-        bool bExpectingDisconnectRemote;
-        bool bDidDisconnect;
-        bool bIsConnectionRecovery;
-        int connectionBackoff;
-        int seq; // more hack fixes
-        DateTime connectTime;
-        AuthSession authSession;
+        private readonly bool authenticatedUser;
+        private bool bConnected;
+        private bool bConnecting;
+        private bool bAborted;
+        private bool bExpectingDisconnectRemote;
+        private bool bDidDisconnect;
+        private bool bIsConnectionRecovery;
+        private int connectionBackoff;
+        private int seq; // more hack fixes
+        private DateTime connectTime;
+        private AuthSession? authSession;
 
         // input
-        readonly SteamUser.LogOnDetails logonDetails;
-
+        private readonly SteamUser.LogOnDetails logonDetails;
         // output
-        readonly Credentials credentials;
+        private readonly Credentials credentials;
 
-        static readonly TimeSpan STEAM3_TIMEOUT = TimeSpan.FromSeconds(30);
+        private static readonly TimeSpan STEAM3_TIMEOUT = TimeSpan.FromSeconds(30);
 
         public delegate void OnPICSChanged(SteamApps.PICSChangesCallback cb);
         public event OnPICSChanged? OnPICSChanges;
@@ -89,6 +74,15 @@ namespace SteamWorkshop.WebAPI.Internal
 
         public delegate void OnClientDisconnect(SteamClient.DisconnectedCallback disconnect);
         public event OnClientDisconnect? OnClientsDisconnect;
+
+        public Steam3Session(string username, string password)
+            : this(new SteamUser.LogOnDetails()
+            {
+                Username = username,
+                Password = password,
+                ShouldRememberPassword = true,
+                LoginID = 0x534B32
+            }) { }
 
         public Steam3Session(SteamUser.LogOnDetails details)
         {
@@ -103,27 +97,23 @@ namespace SteamWorkshop.WebAPI.Internal
             this.bDidDisconnect = false;
             this.seq = 0;
 
-            this.AppTokens = new Dictionary<uint, ulong>();
-            this.PackageTokens = new Dictionary<uint, ulong>();
-            this.DepotKeys = new Dictionary<uint, byte[]>();
-            this.CDNAuthTokens = new ConcurrentDictionary<string, TaskCompletionSource<SteamApps.CDNAuthTokenCallback>>();
-            this.AppInfo = new Dictionary<uint, SteamApps.PICSProductInfoCallback.PICSProductInfo>();
-            this.PackageInfo = new Dictionary<uint, SteamApps.PICSProductInfoCallback.PICSProductInfo>();
-            this.AppBetaPasswords = new Dictionary<string, byte[]>();
+            this.AppTokens = [];
+            this.PackageTokens = [];
+            this.DepotKeys = [];
+            this.CDNAuthTokens = new ConcurrentDictionary<string, TaskCompletionSource<CDNAuthTokenCallback>>();
+            this.AppInfo = [];
+            this.PackageInfo = [];
+            this.AppBetaPasswords = [];
 
-            var clientConfiguration = SteamConfiguration.Create(config =>
-                config
-                    .WithHttpClientFactory(HttpClientFactory.CreateHttpClient)
-            );
-
+            var clientConfiguration = SteamConfiguration.Create(config => config.WithHttpClientFactory(HttpClientFactory.CreateHttpClient));
             this.steamClient = new SteamClient(clientConfiguration);
 
-            this.steamUser = this.steamClient.GetHandler<SteamUser>();
-            this.steamApps = this.steamClient.GetHandler<SteamApps>();
-            this.steamCloud = this.steamClient.GetHandler<SteamCloud>();
-            var steamUnifiedMessages = this.steamClient.GetHandler<SteamUnifiedMessages>();
+            this.steamUser = this.steamClient.GetHandler<SteamUser>()!;
+            this.steamApps = this.steamClient.GetHandler<SteamApps>()!;
+            this.steamCloud = this.steamClient.GetHandler<SteamCloud>()!;
+            var steamUnifiedMessages = this.steamClient.GetHandler<SteamUnifiedMessages>()!;
             this.steamPublishedFile = steamUnifiedMessages.CreateService<IPublishedFile>();
-            this.steamContent = this.steamClient.GetHandler<SteamContent>();
+            this.steamContent = this.steamClient.GetHandler<SteamContent>()!;
 
             this.callbacks = new CallbackManager(this.steamClient);
 
@@ -135,11 +125,9 @@ namespace SteamWorkshop.WebAPI.Internal
             this.callbacks.Subscribe<SteamUser.UpdateMachineAuthCallback>(UpdateMachineAuthCallback);
             this.callbacks.Subscribe<SteamApps.PICSChangesCallback>(PICSChanged);
 
-            this.SentryData = new();
+            this.SentryData = [];
             this.ContentServerPenalty = new();
-            this.LoginTokens = new();
-
-            //this.Connect();
+            this.LoginTokens = [];
         }
 
         private void PICSChanged(PICSChangesCallback callback)
@@ -149,7 +137,7 @@ namespace SteamWorkshop.WebAPI.Internal
 
         public delegate bool WaitCondition();
 
-        private readonly object steamLock = new object();
+        private readonly object steamLock = new();
 
         public bool WaitUntilCallback(Action submitter, WaitCondition waiter)
         {
@@ -161,7 +149,7 @@ namespace SteamWorkshop.WebAPI.Internal
                 }
 
                 var seq = this.seq;
-                do
+                do 
                 {
                     lock (this.steamLock)
                     {
@@ -182,6 +170,7 @@ namespace SteamWorkshop.WebAPI.Internal
 
             return this.credentials;
         }
+
         public async Task<ulong> GetDepotManifestRequestCodeAsync(uint depotId, uint appId, ulong manifestId, string branch)
         {
             if (this.bAborted)
@@ -503,7 +492,7 @@ namespace SteamWorkshop.WebAPI.Internal
             this.credentials.SessionToken = sessionToken.SessionToken;
         }
 
-        private void LicenseListCallback(SteamApps.LicenseListCallback licenseList)
+        private void LicenseListCallback(LicenseListCallback licenseList)
         {
             if (licenseList.Result != EResult.OK)
             {
