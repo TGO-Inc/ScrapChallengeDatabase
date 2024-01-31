@@ -29,7 +29,7 @@ namespace ScrapWorker.Steam
             session.OnClientsLogin += (logon) =>
             {
                 Logger?.WriteLine($"[{this.GetType().FullName}]: Client Logged In. Adjusting timer...");
-                this.SteamChangeTimer.Change(TimeSpan.Zero, TimeSpan.FromSeconds(5));
+                this.SteamChangeTimer.Change(TimeSpan.Zero, TimeSpan.FromSeconds(2));
 
                 this.CallbackTimer!.Elapsed += CallbackThread;
                 this.CallbackTimer.Start();
