@@ -13,7 +13,7 @@ namespace ScrapWorker.Steam
         private readonly object LockObj = new();
         private uint LastChangeNumber = uint.MinValue;
         private readonly DiscordWebhookManager WebhookManager = new(WatchList, silent, Logger);
-        // private Timer? SteamChangeTimer;
+        private System.Threading.Timer? SteamChangeTimer;
 
         private readonly System.Timers.Timer? CallbackTimer = new()
         {
@@ -24,14 +24,12 @@ namespace ScrapWorker.Steam
 
         public void StartWatching()
         {
-            session.OnPICSChanges += PICSChanged;
-
-            // this.SteamChangeTimer = new Timer(OnTimerInterval, session, Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
+            this.SteamChangeTimer = new(OnTimerInterval, null, Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
 
             session.OnClientsLogin += (logon) =>
             {
                 Logger?.WriteLine($"[{this.GetType().FullName}]: Client Logged In. Adjusting timer...");
-                // this.SteamChangeTimer.Change(TimeSpan.Zero, TimeSpan.FromSeconds(2));
+                this.SteamChangeTimer.Change(TimeSpan.Zero, TimeSpan.FromSeconds(2));
 
                 this.CallbackTimer!.Elapsed += CallbackThread;
                 this.CallbackTimer.Start();
@@ -40,11 +38,13 @@ namespace ScrapWorker.Steam
             session.OnClientsDisconnect += (disconnect) =>
             {
                 Logger?.WriteLine($"[{this.GetType().FullName}]: Client Disconnected");
-                // this.SteamChangeTimer.Change(Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
+                this.SteamChangeTimer.Change(Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
 
                 this.CallbackTimer!.Elapsed -= CallbackThread;
                 this.CallbackTimer.Stop();
             };
+
+            session.OnPICSChanges += PICSChanged;
         }
 
         public void StopWatching()
@@ -52,6 +52,9 @@ namespace ScrapWorker.Steam
             this.CallbackTimer!.Stop();
             this.CallbackTimer.Close();
             this.CallbackTimer.Dispose();
+
+            this.SteamChangeTimer!.Change(Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
+            this.SteamChangeTimer.Dispose();
         }
 
         public void WaitForExit()
@@ -61,6 +64,7 @@ namespace ScrapWorker.Steam
                 this.StopWatching();
             }
         }
+
         private void CallbackThread(object? sender, ElapsedEventArgs e)
         {
             lock (this.LockObj)
@@ -74,7 +78,9 @@ namespace ScrapWorker.Steam
 
         private async void OnTimerInterval(object? state)
         {
-            var session = state as Steam3Session;
+            if (cancellationToken.IsCancellationRequested)
+                return;
+
             var res = await session!.steamApps.PICSGetChangesSince(this.LastChangeNumber, true, true);
             #if RELEASE_VERBOSE
                 Logger?.WriteLine(JsonConvert.SerializeObject(res, Formatting.Indented));
@@ -83,9 +89,6 @@ namespace ScrapWorker.Steam
 
         private void PICSChanged(SteamKit2.SteamApps.PICSChangesCallback callback)
         {
-            Logger?.WriteLine($"[{this.GetType().FullName}]: PICS Change Update recieved");
-            Logger?.WriteLine(JsonConvert.SerializeObject(callback, Formatting.Indented));
-
             if (callback.LastChangeNumber == callback.CurrentChangeNumber)
                 return;
             
@@ -96,8 +99,8 @@ namespace ScrapWorker.Steam
             if (apps.Length <= 0)
                 return;
             
-            //Logger?.WriteLine($"[{this.GetType().FullName}]: PICS Change Update recieved");
-            //Logger?.WriteLine(JsonConvert.SerializeObject(callback, Formatting.Indented));
+            Logger?.WriteLine($"[{this.GetType().FullName}]: PICS Change Update recieved");
+            Logger?.WriteLine(JsonConvert.SerializeObject(callback, Formatting.Indented));
             
             foreach (var (_, app) in apps)
             {

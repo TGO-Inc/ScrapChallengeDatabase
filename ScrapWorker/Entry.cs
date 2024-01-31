@@ -4,6 +4,7 @@ using ScrapWorker.HTTP;
 using ScrapWorker.Managers;
 using Newtonsoft.Json;
 using SteamWorkshop.WebAPI.Managers;
+using System.Runtime.InteropServices;
 
 namespace ScrapWorker
 {
@@ -32,7 +33,7 @@ namespace ScrapWorker
             var Logger = new ConsoleManager(cts.Token);
             Logger.StartOutput();
 
-            bool silent = args.Where(x => x.Contains("silent", StringComparison.InvariantCultureIgnoreCase)).Any();
+            bool silent = args.Where(x => x.Contains("silent", StringComparison.InvariantCultureIgnoreCase)).Any() || RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
 
             var SteamSession = new Steam3Session(uname, password, Logger);
             var SteamDB = new SteamDBManager(SteamSession, Apps, cts.Token, Logger, silent);
@@ -40,11 +41,11 @@ namespace ScrapWorker
             SteamDB.StartWatching();
             SteamSession.Connect();
 
-            // var WorkshopTool = new WorkshopScraper(SteamSession, apikey, cts.Token, Logger);
-            // var UpdateService = new UpdateRequestService(WorkshopTool, cts.Token, Logger);
+            var WorkshopTool = new WorkshopScraper(SteamSession, apikey, cts.Token, Logger);
+            var UpdateService = new UpdateRequestService(WorkshopTool, cts.Token, Logger);
 
-            // WorkshopTool.ForceRunTasks();
-            // UpdateService.StartService();
+            WorkshopTool.ForceRunTasks();
+            UpdateService.StartService();
 
             try
             {
@@ -57,11 +58,11 @@ namespace ScrapWorker
                 Console.ResetColor();
 
                 // Dispose and perform final tasks
-                // UpdateService.WaitForExit();
+                UpdateService.WaitForExit();
 
                 SteamSession.Disconnect();
                 SteamDB.WaitForExit();
-                // WorkshopTool.WaitForExit();
+                WorkshopTool.WaitForExit();
 
                 Logger.WaitForExit();
 
