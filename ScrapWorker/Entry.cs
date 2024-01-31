@@ -40,11 +40,11 @@ namespace ScrapWorker
             SteamDB.StartWatching();
             SteamSession.Connect();
 
-            var WorkshopTool = new WorkshopScraper(SteamSession, apikey, cts.Token, Logger);
-            var UpdateService = new UpdateRequestService(WorkshopTool, cts.Token, Logger);
+            // var WorkshopTool = new WorkshopScraper(SteamSession, apikey, cts.Token, Logger);
+            // var UpdateService = new UpdateRequestService(WorkshopTool, cts.Token, Logger);
 
-            WorkshopTool.ForceRunTasks();
-            UpdateService.StartService();
+            // WorkshopTool.ForceRunTasks();
+            // UpdateService.StartService();
 
             try
             {
@@ -57,11 +57,11 @@ namespace ScrapWorker
                 Console.ResetColor();
 
                 // Dispose and perform final tasks
-                UpdateService.WaitForExit();
+                // UpdateService.WaitForExit();
 
                 SteamSession.Disconnect();
                 SteamDB.WaitForExit();
-                WorkshopTool.WaitForExit();
+                // WorkshopTool.WaitForExit();
 
                 Logger.WaitForExit();
 
