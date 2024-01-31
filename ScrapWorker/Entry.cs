@@ -32,7 +32,7 @@ namespace ScrapWorker
             var Logger = new ConsoleManager(cts.Token);
             Logger.StartOutput();
 
-            bool silent = args.Where(x => x.Contains("silent", StringComparison.InvariantCultureIgnoreCase)).Any() || true;
+            bool silent = args.Where(x => x.Contains("silent", StringComparison.InvariantCultureIgnoreCase)).Any();
 
             var SteamSession = new Steam3Session(uname, password, Logger);
             var SteamDB = new SteamDBManager(SteamSession, Apps, cts.Token, Logger, silent);
