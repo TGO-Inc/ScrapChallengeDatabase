@@ -65,7 +65,8 @@ namespace ScrapWorker.HTTP
                 }
                 catch
                 {
-                    Logger?.WriteLine($"[{this.GetType().FullName}]: Listener fail");
+                    Logger?.Colored.ForegroundColor(ConsoleColor.DarkYellow);
+                    Logger?.Colored.WriteLine($"[{this.GetType().FullName}]: Listener fail");
                 }
             }
         }

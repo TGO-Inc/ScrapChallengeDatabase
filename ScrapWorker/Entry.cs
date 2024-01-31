@@ -67,6 +67,7 @@ namespace ScrapWorker
 
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine($"Program Terminated at [{TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.Local)}]");
+                Console.ResetColor();
             }
         }
     }
