@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using ScrapWorker.Managers;
+using SteamWorkshop.WebAPI.Managers;
 using System.Net.Http.Headers;
 
 namespace ScrapWorker.HTTP

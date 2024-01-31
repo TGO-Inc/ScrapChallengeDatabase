@@ -3,6 +3,7 @@ using SteamWorkshop.WebAPI.Internal;
 using ScrapWorker.HTTP;
 using ScrapWorker.Managers;
 using Newtonsoft.Json;
+using SteamWorkshop.WebAPI.Managers;
 
 namespace ScrapWorker
 {
@@ -31,9 +32,9 @@ namespace ScrapWorker
             var Logger = new ConsoleManager(cts.Token);
             Logger.StartOutput();
 
-            bool silent = args.Where(x => x.Contains("silent", StringComparison.InvariantCultureIgnoreCase)).Any();
+            bool silent = args.Where(x => x.Contains("silent", StringComparison.InvariantCultureIgnoreCase)).Any() || true;
 
-            var SteamSession = new Steam3Session(uname, password);
+            var SteamSession = new Steam3Session(uname, password, Logger);
             var SteamDB = new SteamDBManager(SteamSession, Apps, cts.Token, Logger, silent);
             
             SteamDB.StartWatching();
@@ -51,7 +52,9 @@ namespace ScrapWorker
             }
             catch (TaskCanceledException)
             {
+                Console.ForegroundColor = ConsoleColor.Yellow;
                 Console.WriteLine("Cancellation requested. Waiting for ongoing tasks to complete...");
+                Console.ResetColor();
 
                 // Dispose and perform final tasks
                 UpdateService.WaitForExit();
@@ -62,6 +65,7 @@ namespace ScrapWorker
 
                 Logger.WaitForExit();
 
+                Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine($"Program Terminated at [{TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.Local)}]");
             }
         }

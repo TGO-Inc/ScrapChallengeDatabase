@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using SteamKit2.CDN;
+using SteamWorkshop.WebAPI.Managers;
 
 namespace SteamWorkshop.WebAPI.Internal
 {
@@ -21,9 +22,11 @@ namespace SteamWorkshop.WebAPI.Internal
         private readonly AutoResetEvent populatePoolEvent;
         private readonly Task monitorTask;
         private readonly CancellationTokenSource shutdownToken;
+        private readonly ConsoleManager? Logger;
 
-        public CDNClientPool(Steam3Session steamSession, uint appId)
+        public CDNClientPool(Steam3Session steamSession, uint appId, ConsoleManager? Logger)
         {
+            this.Logger = Logger;
             this.steamSession = steamSession;
             this.appId = appId;
             this.CDNClient = new Client(steamSession.steamClient);
@@ -55,7 +58,7 @@ namespace SteamWorkshop.WebAPI.Internal
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Failed to retrieve content server list: {0}", ex.Message);
+                this.Logger?.WriteLine($"[{this.GetType().FullName}]: Failed to retrieve content server list: {ex.Message}");
             }
 
             return null;

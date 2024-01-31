@@ -4,6 +4,7 @@ using System.Security.Cryptography;
 using SteamKit2;
 using SteamKit2.Authentication;
 using SteamKit2.Internal;
+using SteamWorkshop.WebAPI.Managers;
 using static SteamKit2.SteamApps;
 
 namespace SteamWorkshop.WebAPI.Internal
@@ -75,19 +76,23 @@ namespace SteamWorkshop.WebAPI.Internal
         public delegate void OnClientDisconnect(SteamClient.DisconnectedCallback disconnect);
         public event OnClientDisconnect? OnClientsDisconnect;
 
-        public Steam3Session(string username, string password)
+        public readonly ConsoleManager? Logger;
+
+        public Steam3Session(string username, string password, ConsoleManager Logger)
             : this(new SteamUser.LogOnDetails()
             {
                 Username = username,
                 Password = password,
                 ShouldRememberPassword = true,
                 LoginID = 0x534B32
-            }) { }
+            }) 
+        {
+            this.Logger = Logger;
+        }
 
         public Steam3Session(SteamUser.LogOnDetails details)
         {
             this.logonDetails = details;
-
             this.authenticatedUser = details.Username != null;
             this.credentials = new Credentials();
             this.bConnected = false;
@@ -199,11 +204,11 @@ namespace SteamWorkshop.WebAPI.Internal
             Action<SteamApps.DepotKeyCallback> cbMethod = depotKey =>
             {
                 completed = true;
-                Console.WriteLine("Got depot key for {0} result: {1}", depotKey.DepotID, depotKey.Result);
+                this.Logger?.WriteLine($"[{this.GetType().FullName}]: Got depot key for {depotKey.DepotID} result: {depotKey.Result}");
 
                 if (depotKey.Result != EResult.OK)
                 {
-                    Console.WriteLine("Error getting depot key!");
+                    this.Logger?.WriteLine($"[{this.GetType().FullName}]: Error getting depot key!");
                     this.Abort();
                     return;
                 }
@@ -226,7 +231,7 @@ namespace SteamWorkshop.WebAPI.Internal
 
         public void Connect()
         {
-            Console.WriteLine("Connecting to Steam3...");
+            this.Logger?.WriteLine($"[{this.GetType().FullName}]: Connecting to Steam3...");
 
             this.bAborted = false;
             this.bConnected = false;
@@ -279,7 +284,7 @@ namespace SteamWorkshop.WebAPI.Internal
 
             if (diff > STEAM3_TIMEOUT && !this.bConnected)
             {
-                Console.WriteLine("Timeout connecting to Steam3.");
+                this.Logger?.WriteLine($"[{this.GetType().FullName}]: Timeout connecting to Steam3.");
                 Abort();
             }
         }
@@ -296,14 +301,14 @@ namespace SteamWorkshop.WebAPI.Internal
 
             if (!this.authenticatedUser)
             {
-                Console.WriteLine("Logging anonymously into Steam3...");
+                this.Logger?.WriteLine($"[{this.GetType().FullName}]: Logging anonymously into Steam3...");
                 this.steamUser.LogOnAnonymous();
             }
             else
             {
                 if (this.logonDetails.Username != null)
                 {
-                    Console.WriteLine("Logging '{0}' into Steam3...", this.logonDetails.Username);
+                    this.Logger?.WriteLine($"[{this.GetType().FullName}]: Logging '{this.logonDetails.Username}' into Steam3...");
                 }
 
                 if (this.authSession is null)
@@ -325,8 +330,8 @@ namespace SteamWorkshop.WebAPI.Internal
                         }
                         catch (Exception ex)
                         {
-                            //Console.Error.WriteLine("Failed to authenticate with Steam: " + ex.Message);
-                            Console.Error.WriteLine(ex);
+                            //this.Logger?.Error.WriteLine($"[{this.GetType().FullName}]: Failed to authenticate with Steam: " + ex.Message);
+                            this.Logger?.Error.WriteLine(ex);
                             this.Abort(false);
                             return;
                         }
@@ -351,7 +356,7 @@ namespace SteamWorkshop.WebAPI.Internal
                     }
                     catch (Exception ex)
                     {
-                        Console.Error.WriteLine("Failed to authenticate with Steam: " + ex.Message);
+                        this.Logger?.Error.WriteLine($"[{this.GetType().FullName}]: Failed to authenticate with Steam: " + ex.Message);
                         this.Abort(false);
                         return;
                     }
@@ -367,14 +372,13 @@ namespace SteamWorkshop.WebAPI.Internal
         {
             this.bDidDisconnect = true;
 
-            DebugLog.WriteLine(
-                nameof(Steam3Session),
-                $"Disconnected: bIsConnectionRecovery = {this.bIsConnectionRecovery}, UserInitiated = {disconnected.UserInitiated}, bExpectingDisconnectRemote = {this.bExpectingDisconnectRemote}");
+            this.Logger?.WriteLine(
+                $"{nameof(Steam3Session)}: Disconnected: bIsConnectionRecovery = {this.bIsConnectionRecovery}, UserInitiated = {disconnected.UserInitiated}, bExpectingDisconnectRemote = {this.bExpectingDisconnectRemote}");
 
             // When recovering the connection, we want to reconnect even if the remote disconnects us
             if (!this.bIsConnectionRecovery && (disconnected.UserInitiated || this.bExpectingDisconnectRemote))
             {
-                Console.WriteLine("Disconnected from Steam");
+                this.Logger?.WriteLine($"[{this.GetType().FullName}]: Disconnected from Steam");
 
                 // Any operations outstanding need to be aborted
                 this.bAborted = true;
@@ -383,18 +387,18 @@ namespace SteamWorkshop.WebAPI.Internal
             }
             else if (this.connectionBackoff >= 10)
             {
-                Console.WriteLine("Could not connect to Steam after 10 tries");
+                this.Logger?.WriteLine($"[{this.GetType().FullName}]: Could not connect to Steam after 10 tries");
                 this.Abort(false);
             }
             else if (!this.bAborted)
             {
                 if (this.bConnecting)
                 {
-                    Console.WriteLine("Connection to Steam failed. Trying again");
+                    this.Logger?.WriteLine($"[{this.GetType().FullName}]: Connection to Steam failed. Trying again");
                 }
                 else
                 {
-                    Console.WriteLine("Lost connection to Steam. Reconnecting");
+                    this.Logger?.WriteLine($"[{this.GetType().FullName}]: Lost connection to Steam. Reconnecting");
                 }
 
                 Thread.Sleep(1000 * ++connectionBackoff);
@@ -418,15 +422,16 @@ namespace SteamWorkshop.WebAPI.Internal
 
                 if (!isAccessToken)
                 {
-                    Console.WriteLine("This account is protected by Steam Guard.");
+                    this.Logger?.WriteLine($"[{this.GetType().FullName}]: This account is protected by Steam Guard.");
                 }
 
                 if (is2FA)
                 {
                     do
                     {
-                        Console.Write("Please enter your 2 factor auth code from your authenticator app: ");
-                        this.logonDetails.TwoFactorCode = Console.ReadLine();
+                        this.Logger?.WriteLine($"[{this.GetType().FullName}]: Please enter your 2 factor auth code from your authenticator app");
+                        break;
+                        //this.logonDetails.TwoFactorCode = this.Logger?.ReadLine();
                     } while (string.Empty == this.logonDetails.TwoFactorCode);
                 }
                 else if (isAccessToken)
@@ -435,7 +440,7 @@ namespace SteamWorkshop.WebAPI.Internal
                     //this.settings.Save();
 
                     // TODO: Handle gracefully by falling back to password prompt?
-                    Console.WriteLine("Access token was rejected.");
+                    this.Logger?.WriteLine($"[{this.GetType().FullName}]: Access token was rejected.");
                     this.Abort(false);
                     return;
                 }
@@ -443,12 +448,13 @@ namespace SteamWorkshop.WebAPI.Internal
                 {
                     do
                     {
-                        Console.Write("Please enter the authentication code sent to your email address: ");
-                        this.logonDetails.AuthCode = Console.ReadLine();
+                        this.Logger?.WriteLine($"[{this.GetType().FullName}]: Please enter the authentication code sent to your email address: ");
+                        //this.logonDetails.AuthCode = this.Logger?.ReadLine();
+                        break;
                     } while (string.Empty == this.logonDetails.AuthCode);
                 }
 
-                Console.Write("Retrying Steam3 connection...");
+                this.Logger?.WriteLine($"[{this.GetType().FullName}]: Retrying Steam3 connection...");
                 this.Connect();
 
                 return;
@@ -456,7 +462,7 @@ namespace SteamWorkshop.WebAPI.Internal
 
             if (loggedOn.Result == EResult.TryAnotherCM)
             {
-                Console.Write("Retrying Steam3 connection (TryAnotherCM)...");
+                this.Logger?.WriteLine($"[{this.GetType().FullName}]: Retrying Steam3 connection (TryAnotherCM)...");
 
                 this.Reconnect();
 
@@ -465,7 +471,7 @@ namespace SteamWorkshop.WebAPI.Internal
 
             if (loggedOn.Result == EResult.ServiceUnavailable)
             {
-                Console.WriteLine("Unable to login to Steam3: {0}", loggedOn.Result);
+                this.Logger?.WriteLine($"[{this.GetType().FullName}]: Unable to login to Steam3: {loggedOn.Result}");
                 this.Abort(false);
 
                 return;
@@ -473,13 +479,13 @@ namespace SteamWorkshop.WebAPI.Internal
 
             if (loggedOn.Result != EResult.OK)
             {
-                Console.WriteLine("Unable to login to Steam3: {0}", loggedOn.Result);
+                this.Logger?.WriteLine($"[{this.GetType().FullName}]: Unable to login to Steam3: {loggedOn.Result}");
                 this.Abort();
 
                 return;
             }
 
-            Console.WriteLine("Logged In");
+            this.Logger?.WriteLine($"[{this.GetType().FullName}]: Logged In");
 
             this.OnClientsLogin.Invoke(loggedOn);
 
@@ -496,13 +502,13 @@ namespace SteamWorkshop.WebAPI.Internal
         {
             if (licenseList.Result != EResult.OK)
             {
-                Console.WriteLine("Unable to get license list: {0} ", licenseList.Result);
+                this.Logger?.WriteLine($"[{this.GetType().FullName}]: Unable to get license list: {licenseList.Result} ");
                 this.Abort();
 
                 return;
             }
 
-            Console.WriteLine("Got {0} licenses for account", licenseList.LicenseList.Count);
+            this.Logger?.WriteLine($"[{this.GetType().FullName}]: Got {licenseList.LicenseList.Count} licenses for account");
             this.Licenses = licenseList.LicenseList;
 
             foreach (var license in licenseList.LicenseList)
@@ -517,7 +523,7 @@ namespace SteamWorkshop.WebAPI.Internal
         private void UpdateMachineAuthCallback(SteamUser.UpdateMachineAuthCallback machineAuth)
         {
             var hash = SHA1.HashData(machineAuth.Data);
-            Console.WriteLine("Got Machine Auth: {0} {1} {2} {3}", machineAuth.FileName, machineAuth.Offset, machineAuth.BytesToWrite, machineAuth.Data.Length);
+            this.Logger?.WriteLine($"[{this.GetType().FullName}]: Got Machine Auth: {machineAuth.FileName} {machineAuth.Offset} {machineAuth.BytesToWrite} {machineAuth.Data.Length}");
 
             this.SentryData[this.logonDetails.Username!] = machineAuth.Data;
             //this.settings.Save();

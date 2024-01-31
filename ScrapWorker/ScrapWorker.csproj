@@ -18,6 +18,9 @@
 		<DefineConstants>$(DefineConstants);RELEASE_VERBOSE</DefineConstants>
 	</PropertyGroup>
 	<ItemGroup>
+	  <Compile Remove="Managers\ConsoleManager.cs" />
+	</ItemGroup>
+	<ItemGroup>
 	  <None Remove="Assets\Discord\Webhook.txt" />
 	  <None Remove="Assets\SecureFiles\SecureFiles.txt" />
 	</ItemGroup>

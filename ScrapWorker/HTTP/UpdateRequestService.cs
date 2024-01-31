@@ -1,6 +1,7 @@
 ﻿using System.Net;
 using System.Text;
 using ScrapWorker.Managers;
+using SteamWorkshop.WebAPI.Managers;
 
 namespace ScrapWorker.HTTP
 {

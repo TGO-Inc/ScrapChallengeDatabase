@@ -25,7 +25,7 @@ namespace SteamWorkshop.WebAPI
         {
             this.appid = appid;
             this.Steam3 = session;
-            this.CDNClientPool = new(session, appid);
+            this.CDNClientPool = new(session, appid, session.Logger);
             this.CDNConnection = this.CDNClientPool.GetConnection(new());
             this.Steam3.RequestDepotKey(appid, appid);
         }

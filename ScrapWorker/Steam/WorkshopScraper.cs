@@ -4,6 +4,7 @@ using ScrapWorker.Managers;
 using SteamWorkshop.WebAPI;
 using SteamWorkshop.WebAPI.Internal;
 using SteamWorkshop.WebAPI.IPublishedFileService;
+using SteamWorkshop.WebAPI.Managers;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
@@ -15,7 +16,7 @@ namespace ScrapWorker
     internal class WorkshopScraper(Steam3Session session, char[] SteamApiKey, CancellationToken tok, ConsoleManager? Logger = null)
     {
         private readonly DownloadTool DLTool = new(session, 387990);
-        private const string workshopVdfPath = "item_$1.vdf";
+        private const string workshopVdfPath = "Assets/VDF/item_$1.vdf";
         private string LastDirHash = string.Empty;
         private readonly object CriticalLockObj = new();
         private Timer? Worker;

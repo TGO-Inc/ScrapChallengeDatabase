@@ -5,21 +5,14 @@ using System.Threading;
 
 namespace SteamWorkshop.WebAPI.Internal
 {
-    internal class ManagedArray<T> : IEnumerable<T>
+    internal class ManagedArray<T>(int length, bool threaded = false) : IEnumerable<T>
     {
-        public readonly int Size = 0;
-        private readonly T[] base_array;
-        private readonly ConcurrentBag<T> bag;
-        private readonly bool isThreaded;
+        public readonly int Size = length;
+        private readonly T[] base_array = new T[length];
+        private readonly ConcurrentBag<T> bag = new();
+        private readonly bool isThreaded = threaded;
         public int Count = 0;
 
-        public ManagedArray(int length, bool threaded = false)
-        {
-            base_array = new T[length];
-            Size = length;
-            isThreaded = threaded;
-            bag = new();
-        }
         public T this[int index]
         {
             get => base_array[index];
