@@ -7,11 +7,11 @@ using ScrapWorker.Managers;
 
 namespace ScrapWorker.Steam
 {
-    internal class SteamDBManager(Steam3Session session, Dictionary<uint, string> WatchList, CancellationToken cancellationToken, ConsoleManager? Logger = null)
+    internal class SteamDBManager(Steam3Session session, Dictionary<uint, string> WatchList, CancellationToken cancellationToken, ConsoleManager? Logger = null, bool silent = false)
     {
         private readonly object LockObj = new();
         private uint LastChangeNumber = uint.MinValue;
-        private readonly DiscordWebhookManager WebhookManager = new(WatchList, Logger);
+        private readonly DiscordWebhookManager WebhookManager = new(WatchList, silent, Logger);
         // private Timer? SteamChangeTimer;
 
         private readonly System.Timers.Timer? CallbackTimer = new()

@@ -9,6 +9,11 @@ namespace ScrapWorker.HTTP
         private readonly HttpClient HttpClient = new();
         private static string[] WebhookUrlList => CredentialManager.GetWebhookUrls();
 
+        public DiscordWebhookManager(Dictionary<uint, string> Apps, bool silent = false, ConsoleManager? Logger = null)
+            : this(Logger)
+        {
+            if(!silent) this.StartupMessage(Apps);
+        }
         public DiscordWebhookManager(Dictionary<uint, string> Apps, ConsoleManager? Logger = null)
             : this(Logger)
         {
