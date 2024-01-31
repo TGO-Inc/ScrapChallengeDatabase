@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using ScrapWorker.JSON;
+using ScrapWorker.Managers;
 using SteamWorkshop.WebAPI;
 using SteamWorkshop.WebAPI.Internal;
 using SteamWorkshop.WebAPI.IPublishedFileService;

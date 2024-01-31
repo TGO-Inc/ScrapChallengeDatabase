@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using System.Text;
+using ScrapWorker.Managers;
 
 namespace ScrapWorker.HTTP
 {
