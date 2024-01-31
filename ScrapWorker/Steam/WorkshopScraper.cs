@@ -4,14 +4,12 @@ using ScrapWorker.Managers;
 using SteamWorkshop.WebAPI;
 using SteamWorkshop.WebAPI.Internal;
 using SteamWorkshop.WebAPI.IPublishedFileService;
-using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
+
 namespace ScrapWorker
 {
     internal class WorkshopScraper(Steam3Session session, char[] SteamApiKey, CancellationToken tok, ConsoleManager? Logger = null)
@@ -66,7 +64,7 @@ namespace ScrapWorker
         {
             lock (this.CriticalLockObj)
             {
-                this.Worker!.Dispose();
+                this.Worker?.Dispose();
                 this.Worker = null;
             }
         }

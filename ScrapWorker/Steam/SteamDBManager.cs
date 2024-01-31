@@ -9,16 +9,17 @@ namespace ScrapWorker.Steam
 {
     internal class SteamDBManager(Steam3Session session, Dictionary<uint, string> WatchList, CancellationToken cancellationToken, ConsoleManager? Logger = null)
     {
-        private object LockObj = new();
+        private readonly object LockObj = new();
+        private uint LastChangeNumber = uint.MinValue;
         private readonly DiscordWebhookManager WebhookManager = new(WatchList, Logger);
         // private Timer? SteamChangeTimer;
+
         private readonly System.Timers.Timer? CallbackTimer = new()
         {
             Interval = 50,
             AutoReset = false,
             Enabled = true
         };
-        private uint LastChangeNumber = uint.MinValue;
 
         public void StartWatching()
         {
@@ -30,16 +31,19 @@ namespace ScrapWorker.Steam
             {
                 Logger?.WriteLine($"[{this.GetType().FullName}]: Client Logged In. Adjusting timer...");
                 // this.SteamChangeTimer.Change(TimeSpan.Zero, TimeSpan.FromSeconds(2));
+
+                this.CallbackTimer!.Elapsed += CallbackThread;
+                this.CallbackTimer.Start();
             };
 
             session.OnClientsDisconnect += (disconnect) =>
             {
                 Logger?.WriteLine($"[{this.GetType().FullName}]: Client Disconnected");
                 // this.SteamChangeTimer.Change(Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
-            };
 
-            this.CallbackTimer!.Elapsed += CallbackThread;
-            this.CallbackTimer.Start();
+                this.CallbackTimer!.Elapsed -= CallbackThread;
+                this.CallbackTimer.Stop();
+            };
         }
 
         public void StopWatching()

@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Concurrent;
 
 namespace ScrapWorker.Managers
 {
@@ -32,11 +27,11 @@ namespace ScrapWorker.Managers
 
             public void WriteLine(object? message)
             {
-                Message = message;
-                OnWrite!.Invoke(this);
+                this.Message = message;
+                this.OnWrite!.Invoke(this);
 
-                Message = null;
-                Color = null;
+                this.Message = null;
+                this.Color = null;
             }
         }
 
@@ -50,12 +45,12 @@ namespace ScrapWorker.Managers
 
             public void ForegroundColor(ConsoleColor color) { }
 
-            public void WriteLine(object message)
+            public void WriteLine(object? message)
             {
-                Message = message;
-                OnWrite!.Invoke(this);
+                this.Message = message;
+                this.OnWrite!.Invoke(this);
 
-                Message = null;
+                this.Message = null;
             }
         }
 
@@ -68,64 +63,61 @@ namespace ScrapWorker.Managers
         public readonly IColorMessage Error;
         public ConsoleManager(CancellationToken tok)
         {
-            Token = tok;
-            LoggingTask = new Task(DoConsoleLog, Token, TaskCreationOptions.LongRunning);
+            this.Token = tok;
+            this.LoggingTask = new Task(DoConsoleLog, Token, TaskCreationOptions.LongRunning);
 
-            Colored = new ColorMessage();
-            Colored.OnWrite += ColoredWrite;
+            this.Colored = new ColorMessage();
+            this.Colored.OnWrite += ColoredWrite;
 
-            Error = new ErrorMessage();
-            Error.OnWrite += ColoredWrite;
+            this.Error = new ErrorMessage();
+            this.Error.OnWrite += ColoredWrite;
         }
 
         private void ColoredWrite(IColorMessage message)
         {
-            MessageQueue.Enqueue(message);
+            this.MessageQueue.Enqueue(message);
         }
 
         public void WriteLine(object? message)
         {
-            MessageQueue.Enqueue(message);
+            this.MessageQueue.Enqueue(message);
         }
 
         public void WriteLine(params object[] message)
         {
             foreach (var obj in message)
-                MessageQueue.Enqueue(obj);
+                this.MessageQueue.Enqueue(obj);
         }
 
         private async void DoConsoleLog()
         {
-            while (!Token.IsCancellationRequested || !IsWaitingForExit)
+            while (!(this.Token.IsCancellationRequested && this.IsWaitingForExit))
+            while (this.MessageQueue.TryDequeue(out var msg))
             {
-                foreach (var msg in MessageQueue)
+                switch (msg)
                 {
-                    switch (msg)
-                    {
-                        case IColorMessage cmsg:
-                            if (cmsg.Color.HasValue) Console.ForegroundColor = cmsg.Color.Value;
-                            Console.WriteLine(cmsg.Message);
-                            Console.ResetColor();
-                            break;
-                        default:
-                            Console.WriteLine(msg);
-                            break;
-                    }
+                    case IColorMessage cmsg:
+                        if (cmsg.Color.HasValue) Console.ForegroundColor = cmsg.Color.Value;
+                        Console.WriteLine(cmsg.Message);
+                        Console.ResetColor();
+                        break;
+                    default:
+                        Console.WriteLine(msg);
+                        break;
                 }
-
                 await Task.Delay(50);
             }
         }
 
         public void StartOutput()
         {
-            LoggingTask.Start();
+            this.LoggingTask.Start();
         }
 
         public void WaitForExit()
         {
-            IsWaitingForExit = true;
-            LoggingTask.Wait();
+            this.IsWaitingForExit = true;
+            this.LoggingTask.Wait();
         }
     }
 }

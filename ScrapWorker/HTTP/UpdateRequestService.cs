@@ -20,6 +20,7 @@ namespace ScrapWorker.HTTP
             this.Listener.Prefixes.Add("http://127.0.0.1:18251/");
             this.Listener.Start();
 
+            Logger?.WriteLine($"[{this.GetType().FullName}]: Listener Service Started");
             Task.Run(ListenerService, tok);
         }
 
@@ -32,32 +33,39 @@ namespace ScrapWorker.HTTP
         {
             while (!tok.IsCancellationRequested)
             {
-                var context = await Listener.GetContextAsync();
-                var response = context.Response;
-
-                var request = context.Request;
-                var hasUpdateQuery = request.QueryString["update"] != null;
-
-                string responseString;
-                var nextTriggerAllowedIn = (this.lastManualTrigger + TimeSpan.FromMinutes(manualTriggerInterval) - DateTime.UtcNow).TotalSeconds;
-                if (hasUpdateQuery && nextTriggerAllowedIn <= 0)
+                try
                 {
-                    this.lastManualTrigger = DateTime.UtcNow;
-                    responseString = $"<script>window.location.href=window.location.protocol + \"//\" + window.location.host</script>";
-                    
-                    Logger?.WriteLine($"[{this.GetType().FullName}]: Manual Trigger. Calling Tasks.");
-                    workshopScraper.ForceRunTasks();
-                }
-                else
-                {
-                    responseString = $"{{\"nextManualDelay\":\"{Math.Max(nextTriggerAllowedIn, 0)}\"}}";
-                }
+                    var context = await Listener.GetContextAsync();
+                    var response = context.Response;
 
-                byte[] buffer = Encoding.UTF8.GetBytes(responseString);
-                response.ContentLength64 = buffer.Length;
-                var output = response.OutputStream;
-                await output.WriteAsync(buffer);
-                output.Close();
+                    var request = context.Request;
+                    var hasUpdateQuery = request.QueryString["update"] != null;
+
+                    string responseString;
+                    var nextTriggerAllowedIn = (this.lastManualTrigger + TimeSpan.FromMinutes(manualTriggerInterval) - DateTime.UtcNow).TotalSeconds;
+                    if (hasUpdateQuery && nextTriggerAllowedIn <= 0)
+                    {
+                        this.lastManualTrigger = DateTime.UtcNow;
+                        responseString = $"<script>window.location.href=window.location.protocol + \"//\" + window.location.host</script>";
+
+                        Logger?.WriteLine($"[{this.GetType().FullName}]: Manual Trigger. Calling Tasks.");
+                        workshopScraper.ForceRunTasks();
+                    }
+                    else
+                    {
+                        responseString = $"{{\"nextManualDelay\":\"{Math.Max(nextTriggerAllowedIn, 0)}\"}}";
+                    }
+
+                    byte[] buffer = Encoding.UTF8.GetBytes(responseString);
+                    response.ContentLength64 = buffer.Length;
+                    var output = response.OutputStream;
+                    await output.WriteAsync(buffer);
+                    output.Close();
+                }
+                catch
+                {
+                    Logger?.WriteLine($"[{this.GetType().FullName}]: Listener fail");
+                }
             }
         }
     }
