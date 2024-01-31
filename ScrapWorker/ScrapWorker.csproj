@@ -16,6 +16,10 @@
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseVerbose|AnyCPU'">
 		<DefineConstants>$(DefineConstants);RELEASE_VERBOSE</DefineConstants>
 	</PropertyGroup>
+	<ItemGroup>
+	  <None Remove="Assets\Discord\Webhook.txt" />
+	  <None Remove="Assets\SecureFiles\SecureFiles.txt" />
+	</ItemGroup>
 
 	<ItemGroup>
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
