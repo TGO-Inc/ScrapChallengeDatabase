@@ -17,7 +17,7 @@ namespace ScrapWorker.Steam
 
         private readonly System.Timers.Timer? CallbackTimer = new()
         {
-            Interval = 50,
+            Interval = 1000,
             AutoReset = false,
             Enabled = true
         };
@@ -29,7 +29,7 @@ namespace ScrapWorker.Steam
             session.OnClientsLogin += (logon) =>
             {
                 Logger?.WriteLine($"[{this.GetType().FullName}]: Client Logged In. Adjusting timer...");
-                this.SteamChangeTimer.Change(TimeSpan.Zero, TimeSpan.FromSeconds(2));
+                this.SteamChangeTimer.Change(TimeSpan.Zero, TimeSpan.FromSeconds(5));
 
                 this.CallbackTimer!.Elapsed += CallbackThread;
                 this.CallbackTimer.Start();
