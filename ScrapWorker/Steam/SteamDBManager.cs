@@ -83,6 +83,9 @@ namespace ScrapWorker.Steam
 
         private void PICSChanged(SteamKit2.SteamApps.PICSChangesCallback callback)
         {
+            Logger?.WriteLine($"[{this.GetType().FullName}]: PICS Change Update recieved");
+            Logger?.WriteLine(JsonConvert.SerializeObject(callback, Formatting.Indented));
+
             if (callback.LastChangeNumber == callback.CurrentChangeNumber)
                 return;
             
@@ -93,8 +96,8 @@ namespace ScrapWorker.Steam
             if (apps.Length <= 0)
                 return;
             
-            Logger?.WriteLine($"[{this.GetType().FullName}]: PICS Change Update recieved");
-            Logger?.WriteLine(JsonConvert.SerializeObject(callback, Formatting.Indented));
+            //Logger?.WriteLine($"[{this.GetType().FullName}]: PICS Change Update recieved");
+            //Logger?.WriteLine(JsonConvert.SerializeObject(callback, Formatting.Indented));
             
             foreach (var (_, app) in apps)
             {
