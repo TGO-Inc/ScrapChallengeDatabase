@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ScrapWorker
+namespace ScrapWorker.Managers
 {
     internal class ConsoleManager
     {
@@ -14,7 +14,7 @@ namespace ScrapWorker
         {
             public event WriteColored? OnWrite;
             public void ForegroundColor(ConsoleColor color);
-            public ConsoleColor? Color { get;  }
+            public ConsoleColor? Color { get; }
             public object? Message { get; }
 
             public void WriteLine(object? message);
@@ -28,15 +28,15 @@ namespace ScrapWorker
 
             public event WriteColored? OnWrite;
 
-            public void ForegroundColor(ConsoleColor color) => this.Color = color;
+            public void ForegroundColor(ConsoleColor color) => Color = color;
 
             public void WriteLine(object? message)
             {
-                this.Message = message;
-                this.OnWrite!.Invoke(this);
+                Message = message;
+                OnWrite!.Invoke(this);
 
-                this.Message = null;
-                this.Color = null;
+                Message = null;
+                Color = null;
             }
         }
 
@@ -52,10 +52,10 @@ namespace ScrapWorker
 
             public void WriteLine(object message)
             {
-                this.Message = message;
-                this.OnWrite!.Invoke(this);
+                Message = message;
+                OnWrite!.Invoke(this);
 
-                this.Message = null;
+                Message = null;
             }
         }
 
@@ -68,41 +68,41 @@ namespace ScrapWorker
         public readonly IColorMessage Error;
         public ConsoleManager(CancellationToken tok)
         {
-            this.Token = tok;
-            this.LoggingTask = new Task(DoConsoleLog, this.Token, TaskCreationOptions.LongRunning);
-            
-            this.Colored = new ColorMessage();
-            this.Colored.OnWrite += ColoredWrite;
+            Token = tok;
+            LoggingTask = new Task(DoConsoleLog, Token, TaskCreationOptions.LongRunning);
 
-            this.Error = new ErrorMessage();
-            this.Error.OnWrite += ColoredWrite;
+            Colored = new ColorMessage();
+            Colored.OnWrite += ColoredWrite;
+
+            Error = new ErrorMessage();
+            Error.OnWrite += ColoredWrite;
         }
 
         private void ColoredWrite(IColorMessage message)
         {
-            this.MessageQueue.Enqueue(message);
+            MessageQueue.Enqueue(message);
         }
 
         public void WriteLine(object? message)
         {
-            this.MessageQueue.Enqueue(message);
+            MessageQueue.Enqueue(message);
         }
 
         public void WriteLine(params object[] message)
         {
             foreach (var obj in message)
-                this.MessageQueue.Enqueue(obj);
+                MessageQueue.Enqueue(obj);
         }
 
         private async void DoConsoleLog()
         {
-            while(!this.Token.IsCancellationRequested || !this.IsWaitingForExit)
+            while (!Token.IsCancellationRequested || !IsWaitingForExit)
             {
-                foreach(var msg in this.MessageQueue)
+                foreach (var msg in MessageQueue)
                 {
-                    switch(msg)
+                    switch (msg)
                     {
-                       case IColorMessage cmsg:
+                        case IColorMessage cmsg:
                             if (cmsg.Color.HasValue) Console.ForegroundColor = cmsg.Color.Value;
                             Console.WriteLine(cmsg.Message);
                             Console.ResetColor();
@@ -119,13 +119,13 @@ namespace ScrapWorker
 
         public void StartOutput()
         {
-            this.LoggingTask.Start();
+            LoggingTask.Start();
         }
 
         public void WaitForExit()
         {
-            this.IsWaitingForExit = true;
-            this.LoggingTask.Wait();
+            IsWaitingForExit = true;
+            LoggingTask.Wait();
         }
     }
 }

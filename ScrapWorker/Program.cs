@@ -3,7 +3,6 @@ using SteamWorkshop.WebAPI.IPublishedFileService;
 using System.Net;
 using System.Collections.Concurrent;
 using Newtonsoft.Json;
-using ScrapWorker;
 using System.Text;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
@@ -17,6 +16,7 @@ using System.Net.Http;
 using ScrapWorker.Steam;
 using SteamWorkshop.WebAPI.Internal;
 using ScrapWorker.HTTP;
+using ScrapWorker.Managers;
 
 namespace ScrapWorker
 {

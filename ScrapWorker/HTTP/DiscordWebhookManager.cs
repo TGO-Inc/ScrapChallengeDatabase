@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using ScrapWorker.Managers;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using static SteamKit2.Internal.CCloud_EnumerateUserApps_Response;

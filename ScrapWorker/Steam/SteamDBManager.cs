@@ -3,6 +3,7 @@ using SteamWorkshop.WebAPI.Internal;
 using System.Timers;
 using ScrapWorker.HTTP;
 using Newtonsoft.Json.Bson;
+using ScrapWorker.Managers;
 
 namespace ScrapWorker.Steam
 {
