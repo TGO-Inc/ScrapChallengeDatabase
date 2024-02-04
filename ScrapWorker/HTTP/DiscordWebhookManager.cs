@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using ScrapWorker.Managers;
 using SteamWorkshop.WebAPI.Managers;
+using System;
 using System.Net.Http.Headers;
 
 namespace ScrapWorker.HTTP
@@ -8,7 +9,8 @@ namespace ScrapWorker.HTTP
     internal class DiscordWebhookManager(ConsoleManager? Logger = null)
     {
         private readonly HttpClient HttpClient = new();
-        private static string[] WebhookUrlList => CredentialManager.GetWebhookUrls();
+        private Dictionary<uint, string> Apps;
+        private static Dictionary<IEnumerable<uint>, string> WebhookUrlList => CredentialManager.GetWebhookUrls();
 
         public DiscordWebhookManager(Dictionary<uint, string> Apps, bool silent = false, ConsoleManager? Logger = null)
             : this(Logger)
@@ -23,21 +25,26 @@ namespace ScrapWorker.HTTP
 
         private async void StartupMessage(Dictionary<uint, string> Apps)
         {
+            this.Apps = Apps;
             string json = JsonConvert.SerializeObject(Apps, Formatting.Indented).Replace("\"", "\\\"").Replace("\r", "").Replace("\n", "\\n");
             string content = $"{{\"content\":\"SteamDB tracker started for:\\n```\\n{json}\\n```\", \"flags\": 2}}";
 
-            foreach (var url in WebhookUrlList)
+            foreach (var obj in WebhookUrlList)
+            foreach(var appid in obj.Key)
+            if (this.Apps.ContainsKey(appid))
             {
-                Logger?.WriteLine($"[{this.GetType().FullName}]: Loaded Webhook {url}");
-                await this.HttpClient.PostAsync(url, new StringContent(content, MediaTypeHeaderValue.Parse("application/json")));
+                Logger?.WriteLine($"[{this.GetType().FullName}]: Loaded Webhook {obj.Value}");
+                await this.HttpClient.PostAsync(obj.Value, new StringContent(content, MediaTypeHeaderValue.Parse("application/json")));
             }
         }
 
         public void SendWebhookMessage(string jsonContent)
         {
-            foreach (var url in WebhookUrlList)
+            foreach (var obj in WebhookUrlList)
+            foreach (var appid in obj.Key)
+            if (this.Apps.ContainsKey(appid))
             {
-                this.HttpClient.PostAsync(url, new StringContent(jsonContent, MediaTypeHeaderValue.Parse("application/json"))).GetAwaiter().GetResult();
+                this.HttpClient.PostAsync(obj.Value, new StringContent(jsonContent, MediaTypeHeaderValue.Parse("application/json"))).GetAwaiter().GetResult();
             }    
         }
     }

@@ -2,7 +2,6 @@
 using SteamWorkshop.WebAPI.Internal;
 using ScrapWorker.HTTP;
 using ScrapWorker.Managers;
-using Newtonsoft.Json;
 using SteamWorkshop.WebAPI.Managers;
 using System.Runtime.InteropServices;
 
@@ -11,8 +10,9 @@ namespace ScrapWorker
     public class Entry
     {        
         private static readonly Dictionary<uint, string> Apps = new() {
-            {387990, "Scrap Mechanic"},
-            {588870, "Scrap Mechanic Mod Tool"}
+            { 387990, "Scrap Mechanic" },
+            { 588870, "Scrap Mechanic Mod Tool" },
+            { 1409160, "Plasma" }
         };
 
         public static async Task Main(string[] args)
