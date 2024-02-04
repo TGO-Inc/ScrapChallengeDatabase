@@ -1,0 +1,3 @@
+[submodule "SteamWorkshopAPI"]
+	path = SteamWorkshopAPI
+	url = https://github.com/TGO-Inc/SteamWorkshopAPI
