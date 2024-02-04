@@ -35,6 +35,7 @@ namespace ScrapWorker.HTTP
             {
                 Logger?.WriteLine($"[{this.GetType().FullName}]: Loaded Webhook {obj.Value}");
                 await this.HttpClient.PostAsync(obj.Value, new StringContent(content, MediaTypeHeaderValue.Parse("application/json")));
+                break;
             }
         }
 
@@ -45,6 +46,7 @@ namespace ScrapWorker.HTTP
             if (this.Apps.ContainsKey(appid))
             {
                 this.HttpClient.PostAsync(obj.Value, new StringContent(jsonContent, MediaTypeHeaderValue.Parse("application/json"))).GetAwaiter().GetResult();
+                break;
             }    
         }
     }
