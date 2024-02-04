@@ -31,7 +31,7 @@ namespace ScrapWorker.HTTP
             foreach(var appid in obj.Key)
             if (this.Apps.ContainsKey(appid))
             {
-                string json = JsonConvert.SerializeObject(Apps.Where(i => obj.Key.Contains(i.Key)), Formatting.Indented).Replace("\"", "\\\"").Replace("\r", "").Replace("\n", "\\n");
+                string json = JsonConvert.SerializeObject(Apps.Where(i => obj.Key.Contains(i.Key)).ToDictionary(), Formatting.Indented).Replace("\"", "\\\"").Replace("\r", "").Replace("\n", "\\n");
                 string content = $"{{\"content\":\"SteamDB tracker started for:\\n```\\n{json}\\n```\", \"flags\": 2}}";
 
                 Logger?.WriteLine($"[{this.GetType().FullName}]: Loaded Webhook {obj.Value}");
