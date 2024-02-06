@@ -116,7 +116,7 @@ namespace ScrapWorker.Steam
                     $"{{\"content\":\"New SteamDB Change for App `{appName} ({app.ID})`\nhttps://steamdb.info/app/{app.ID}/history/?changeid={app.ChangeNumber}\", \"flags\": 2}}}}";
                 Logger?.WriteLine($"TARGET_CONTENT: {content}");
 
-                this.WebhookManager.SendWebhookMessage(content);
+                this.WebhookManager.SendWebhookMessage(app.ID, content);
                 break;
             }
         }
