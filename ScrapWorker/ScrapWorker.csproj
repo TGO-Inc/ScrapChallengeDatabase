@@ -7,6 +7,13 @@
 		<Configurations>Debug;Release;Debug BOT;ReleaseVerbose</Configurations>
 		<TargetFramework>net8.0</TargetFramework>
 		<StartupObject>ScrapWorker.Entry</StartupObject>
+		<GenerateDocumentationFile>False</GenerateDocumentationFile>
+		<Trimming>full</Trimming>
+		<Deterministic>false</Deterministic>
+		<NeutralLanguage>en</NeutralLanguage>
+		<AssemblyVersion>1.0.*</AssemblyVersion>
+		<GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>
+		<Deterministic>false</Deterministic>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'" />
@@ -16,6 +23,7 @@
 	</PropertyGroup>
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseVerbose|AnyCPU'">
 		<DefineConstants>$(DefineConstants);RELEASE_VERBOSE</DefineConstants>
+		<Optimize>True</Optimize>
 	</PropertyGroup>
 	<ItemGroup>
 	  <Compile Remove="Managers\ConsoleManager.cs" />

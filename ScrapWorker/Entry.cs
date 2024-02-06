@@ -4,11 +4,15 @@ using ScrapWorker.HTTP;
 using ScrapWorker.Managers;
 using SteamWorkshop.WebAPI.Managers;
 using System.Runtime.InteropServices;
+using System.Reflection;
+using System.Diagnostics;
 
 namespace ScrapWorker
 {
     public class Entry
-    {        
+    {
+        public static readonly string VersionInfo = FileVersionInfo.GetVersionInfo(Assembly.GetExecutingAssembly().Location).FileVersion!;
+
         private static readonly Dictionary<uint, string> Apps = new() {
             { 387990, "Scrap Mechanic" },
             { 588870, "Scrap Mechanic Mod Tool" },
