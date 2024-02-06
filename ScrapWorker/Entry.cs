@@ -21,10 +21,6 @@ namespace ScrapWorker
 
         public static async Task Main(string[] args)
         {
-            Console.WriteLine($"{VersionInfo}");
-            Console.ReadLine();
-            return;
-
             CancellationTokenSource cts = new();
 
             // Wait for a cancellation request (e.g. user pressing Ctrl+C)
