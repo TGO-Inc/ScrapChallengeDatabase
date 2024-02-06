@@ -37,8 +37,12 @@ namespace ScrapWorker.HTTP
 
         public void SendWebhookMessage(uint appid, string jsonContent)
         {
+            Logger?.WriteLine($"[Recieved Message Request]: Appid {appid}");
+
             foreach (var (AppIds, Url) in WebhookUrlList)
             {
+                Logger?.WriteLine($"Processing {Url.Substring(60, 9)}: {{ {string.Join(", ", AppIds)} }}");
+
                 if (!AppIds.Contains(appid))
                     continue;
 
