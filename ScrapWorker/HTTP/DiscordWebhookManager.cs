@@ -29,7 +29,7 @@ namespace ScrapWorker.HTTP
             var (_, Url) = WebhookUrlList.First();
 
             string json = JsonConvert.SerializeObject(Apps.ToDictionary(), Formatting.Indented).Replace("\"", "\\\"").Replace("\r", "").Replace("\n", "\\n");
-            string content = $"{{\"content\":\"[{Entry.VersionInfo}] => SteamDB tracker started for:\\n```\\n{json}\\n```\", \"flags\": 2}}";
+            string content = $"{{\"content\":\"`{Entry.VersionInfo}` => SteamDB tracker started for:\\n```\\n{json}\\n```\", \"flags\": 2}}";
 
             Logger?.WriteLine($"[{this.GetType().FullName}]: Loaded Webhook {Url}");
             await this.HttpClient.PostAsync(Url, new StringContent(content, MediaTypeHeaderValue.Parse("application/json")));            
