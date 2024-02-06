@@ -32,7 +32,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\SteamWorkshopWebAPI\SteamWorkshop.WebAPI.csproj" />
+		<ProjectReference Include="..\SteamWorkshopAPI\SteamWorkshop.API.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

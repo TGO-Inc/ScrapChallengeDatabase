@@ -81,10 +81,17 @@ namespace ScrapWorker.Steam
             if (cancellationToken.IsCancellationRequested)
                 return;
 
-            var res = await session!.steamApps.PICSGetChangesSince(this.LastChangeNumber, true, true);
-            #if RELEASE_VERBOSE
-                Logger?.WriteLine(JsonConvert.SerializeObject(res, Formatting.Indented));
-            #endif
+            try
+            {
+                var res = await session!.steamApps.PICSGetChangesSince(this.LastChangeNumber, true, true);
+                #if RELEASE_VERBOSE
+                    Logger?.WriteLine(JsonConvert.SerializeObject(res, Formatting.Indented));
+                #endif
+            }
+            catch
+            {
+
+            }
         }
 
         private void PICSChanged(SteamKit2.SteamApps.PICSChangesCallback callback)
@@ -107,7 +114,10 @@ namespace ScrapWorker.Steam
                 WatchList.TryGetValue(app.ID, out var appName);
                 var content =
                     $"{{\"content\":\"New SteamDB Change for App `{appName} ({app.ID})`\nhttps://steamdb.info/app/{app.ID}/history/?changeid={app.ChangeNumber}\", \"flags\": 2}}}}";
+                Logger?.WriteLine($"TARGET_CONTENT: {content}");
+
                 this.WebhookManager.SendWebhookMessage(content);
+                break;
             }
         }
     }

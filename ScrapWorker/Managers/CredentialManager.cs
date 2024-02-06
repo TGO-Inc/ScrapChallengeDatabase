@@ -7,13 +7,11 @@ namespace ScrapWorker.Managers
 
         public static string GetPassword() => File.ReadAllText("Assets/SecureFiles/priv.password").Trim();
 
-        public static Dictionary<IEnumerable<uint>, string> GetWebhookUrls() => File.ReadAllLines("Assets/Discord/webhook.url")
+        public static List<(IEnumerable<uint>, string)> GetWebhookUrls() => File.ReadAllLines("Assets/Discord/webhook.url")
                                                                             .Select(s => s.Split("="))
-                                                                            .Select(sr => KeyValuePair.Create(
-                                                                                sr[0]
-                                                                                    .Split(",")
-                                                                                    .Select(f => uint.Parse(f)),
-                                                                                sr[1])).ToDictionary();
+                                                                            .Select(sr => (
+                                                                                sr[0].Split(",").Select(f => uint.Parse(f)),
+                                                                                sr[1])).ToList();
 
         public static char[] GetSteamAPIKey() => File.ReadAllText("Assets/SecureFiles/priv.key").Trim().ToCharArray();
     }
