@@ -112,12 +112,12 @@ namespace ScrapWorker.Steam
             foreach (var (_, app) in apps)
             {
                 WatchList.TryGetValue(app.ID, out var appName);
+                
                 var content =
                     $"{{\"content\":\"New SteamDB Change for App `{appName} ({app.ID})`\nhttps://steamdb.info/app/{app.ID}/history/?changeid={app.ChangeNumber}\", \"flags\": 2}}}}";
-                Logger?.WriteLine($"TARGET_CONTENT: {content}");
+                Logger?.WriteLine($"Message Content: {content}");
 
                 this.WebhookManager.SendWebhookMessage(app.ID, content);
-                break;
             }
         }
     }
