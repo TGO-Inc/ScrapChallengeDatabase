@@ -11,9 +11,6 @@
 		<Trimming>full</Trimming>
 		<Deterministic>false</Deterministic>
 		<NeutralLanguage>en</NeutralLanguage>
-		<AssemblyVersion>1.0.*</AssemblyVersion>
-		<GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>
-		<Deterministic>false</Deterministic>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'" />
@@ -69,5 +66,20 @@
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
 	</ItemGroup>
+
+	<Target Name="PreBuild" BeforeTargets="PreBuildEvent">
+		<PropertyGroup>
+			<BuildTimestampMinor>$([System.DateTime]::Now.ToString("yy"))</BuildTimestampMinor>
+			<BuildTimestampBuild>$([System.DateTime]::Now.ToString("MMdd"))</BuildTimestampBuild>
+			<BuildTimestampRevision>$([System.DateTime]::Now.ToString("HHmm"))</BuildTimestampRevision>
+		</PropertyGroup>
+
+		<!-- Set assembly version -->
+		<PropertyGroup>
+			<AssemblyVersion>1.$(BuildTimestampMinor).$(BuildTimestampBuild).$(BuildTimestampRevision)</AssemblyVersion>
+			<FileVersion>1.$(BuildTimestampMinor).$(BuildTimestampBuild).$(BuildTimestampRevision)</FileVersion>
+			<InformationalVersion>1.$(BuildTimestampMinor).$(BuildTimestampBuild).$(BuildTimestampRevision)</InformationalVersion>
+		</PropertyGroup>
+	</Target>
 
 </Project>
