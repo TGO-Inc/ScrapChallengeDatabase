@@ -27,7 +27,7 @@ namespace ScrapWorker
             Console.CancelKeyPress += (sender, e) =>
             {
                 e.Cancel = true;
-                cts.Cancel();
+                cts.CancelAsync();
             };
 
             var uname = CredentialManager.GetUsername();

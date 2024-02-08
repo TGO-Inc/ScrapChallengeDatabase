@@ -58,7 +58,7 @@ namespace ScrapWorker
             if (this.Worker is not null)
                 this.Worker?.Change(TimeSpan.Zero, TimeSpan.FromHours(12));
             else
-                this.Worker = new Timer(RunTasks, tok, TimeSpan.Zero, TimeSpan.FromHours(12));
+                this.Worker = new Timer(this.RunTasks, tok, TimeSpan.Zero, TimeSpan.FromHours(12));
         }
 
         public void WaitForExit()
@@ -97,7 +97,7 @@ namespace ScrapWorker
                 
                 Logger?.WriteLine($"[{this.GetType().FullName}]: Next working time [{localTime + TimeSpan.FromHours(12)}]");
                 // Reset the timer after tasks completion
-                this.Worker = new Timer(RunTasks, state, TimeSpan.FromHours(12), TimeSpan.FromHours(12));
+                this.Worker = new Timer(this.RunTasks, state, TimeSpan.FromHours(12), TimeSpan.FromHours(12));
             }
         }
 
