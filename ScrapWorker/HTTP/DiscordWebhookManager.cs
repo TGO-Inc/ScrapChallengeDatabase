@@ -46,7 +46,9 @@ namespace ScrapWorker.HTTP
                 if (!AppIds.Contains(appid))
                     continue;
 
-                this.HttpClient.PostAsync(Url, new StringContent(jsonContent, MediaTypeHeaderValue.Parse("application/json"))).GetAwaiter().GetResult();
+                var result = this.HttpClient.PostAsync(Url, new StringContent(jsonContent, MediaTypeHeaderValue.Parse("application/json"))).GetAwaiter().GetResult();
+                Logger?.WriteLine(
+                    $"[{this.GetType().FullName}]: Webhook Response: {result.StatusCode} | {new StreamReader(result.Content.ReadAsStream()).ReadToEnd()}");
             }
         }
     }

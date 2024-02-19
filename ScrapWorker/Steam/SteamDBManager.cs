@@ -114,7 +114,7 @@ namespace ScrapWorker.Steam
                 WatchList.TryGetValue(app.ID, out var appName);
                 
                 var content =
-                    $"{{\"content\":\"New SteamDB Change for App `{appName} ({app.ID})`\nhttps://steamdb.info/app/{app.ID}/history/?changeid={app.ChangeNumber}\", \"flags\": 2}}}}";
+                    $"{{\"content\":\"New SteamDB Change for App `{appName} ({app.ID})`\\nhttps://steamdb.info/app/{app.ID}/history/?changeid={app.ChangeNumber}\", \"flags\": 2}}}}";
                 Logger?.WriteLine($"Message Content: {content}");
 
                 this.WebhookManager.SendWebhookMessage(app.ID, content);
