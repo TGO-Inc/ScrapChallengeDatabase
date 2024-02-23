@@ -42,7 +42,7 @@ namespace ScrapWorker
             var SteamSession = new Steam3Session(uname, password, Logger);
             var SteamDB = new SteamDBManager(SteamSession, Apps, cts.Token, Logger, silent);
 
-            SteamSession.OnFailedToReconnect += () => SteamSessionOnFailedToReconnect(SteamSession);
+            SteamSession.OnFailedToReconnect += () => SteamSessionOnFailedToReconnect(SteamSession, Logger);
             SteamDB.StartWatching();
             SteamSession.Connect();
 
@@ -79,17 +79,19 @@ namespace ScrapWorker
 
         private static System.Threading.Timer? ReconnectionTask;
 
-        private static void SteamSessionOnFailedToReconnect(Steam3Session session)
+        private static void SteamSessionOnFailedToReconnect(Steam3Session session, ConsoleManager Logger)
         {
             ReconnectionTask ??= new Timer(_ =>
             {
                 if (session.steamClient.IsConnected)
                 {
+                    Logger?.WriteLine("[ReconnectTimer]: Steam client is connected.");
                     ReconnectionTask?.Dispose();
                     ReconnectionTask = null;
                 }
                 else
                 {
+                    Logger?.WriteLine("[ReconnectTimer]: Attempting to reconnect to Steam...");
                     session.Reconnect();
                 }
             }, null, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(5));
