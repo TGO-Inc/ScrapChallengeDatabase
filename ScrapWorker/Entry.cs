@@ -21,6 +21,8 @@ namespace ScrapWorker
 
         public static async Task Main(string[] args)
         {
+            Console.WriteLine($"Process Start at {DateTime.Now}");
+            AppDomain.CurrentDomain.ProcessExit += (sender, e) => Console.WriteLine($"Process Exit at {DateTime.Now}");
             CancellationTokenSource cts = new();
 
             // Wait for a cancellation request (e.g. user pressing Ctrl+C)
