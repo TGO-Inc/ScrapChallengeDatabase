@@ -21,10 +21,19 @@ namespace ScrapWorker
 
         public static async Task Main(string[] args)
         {
-            Console.WriteLine($"Process Start at {DateTime.Now}");
-            AppDomain.CurrentDomain.ProcessExit += (sender, e) => Console.WriteLine($"Process Exit at {DateTime.Now}");
-            CancellationTokenSource cts = new();
+            Console.WriteLine($"[{DateTime.Now}] Process Start");
+            AppDomain.CurrentDomain.ProcessExit += (sender, e) => Console.WriteLine($"[{DateTime.Now}] Process Exit");
+            AppDomain.CurrentDomain.UnhandledException += (sender, e) =>
+            {
+                Console.WriteLine($"[{DateTime.Now}] Unhandled Exception");
+                if (e.ExceptionObject.GetType().FullName!.Contains("http", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    Console.WriteLine($"[{DateTime.Now}] HTTP Exception. Waiting before continue.");
+                    Thread.Sleep(5000);
+                }
+            };
 
+            CancellationTokenSource cts = new();
             // Wait for a cancellation request (e.g. user pressing Ctrl+C)
             Console.CancelKeyPress += (sender, e) =>
             {
@@ -39,7 +48,8 @@ namespace ScrapWorker
             var Logger = new ConsoleManager(cts.Token);
             Logger.StartOutput();
 
-            bool silent = args.Where(x => x.Contains("silent", StringComparison.InvariantCultureIgnoreCase)).Any() || RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+            bool silent = args.Where(x => x.Contains("silent", StringComparison.InvariantCultureIgnoreCase)).Any()
+                || RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
 
             var SteamSession = new Steam3Session(uname, password, Logger);
             var SteamDB = new SteamDBManager(SteamSession, Apps, cts.Token, Logger, silent);
@@ -61,7 +71,7 @@ namespace ScrapWorker
             catch (TaskCanceledException)
             {
                 Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine("Cancellation requested. Waiting for ongoing tasks to complete...");
+                Console.WriteLine($"[{DateTime.Now}] Cancellation requested. Waiting for ongoing tasks to complete...");
                 Console.ResetColor();
 
                 // Dispose and perform final tasks
