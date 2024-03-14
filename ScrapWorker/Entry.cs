@@ -22,13 +22,14 @@ namespace ScrapWorker
         public static async Task Main(string[] args)
         {
             Console.WriteLine($"[{DateTime.Now}] Process Start");
+            
             AppDomain.CurrentDomain.ProcessExit += (sender, e) => Console.WriteLine($"[{DateTime.Now}] Process Exit");
             AppDomain.CurrentDomain.UnhandledException += (sender, e) =>
             {
-                Console.WriteLine($"[{DateTime.Now}] Unhandled Exception");
+                Console.Error.WriteLine($"Unhandled Exception");
                 if (e.ExceptionObject.GetType().FullName!.Contains("http", StringComparison.InvariantCultureIgnoreCase))
                 {
-                    Console.WriteLine($"[{DateTime.Now}] HTTP Exception. Waiting before continue.");
+                    Console.Error.WriteLine($"HTTP Exception. Waiting before continue.");
                     Thread.Sleep(5000);
                 }
             };
