@@ -98,10 +98,11 @@ namespace ScrapWorker
             {
                 if (session.steamClient.IsConnected)
                 {
-                    session.SubscribeAll();
+                    // session.SubscribeAll();
                     Logger?.WriteLine("[ReconnectTimer]: Steam client is connected.");
                     ReconnectionTask?.Dispose();
                     ReconnectionTask = null;
+                    Environment.Exit(-278465951);
                 }
                 else
                 {
