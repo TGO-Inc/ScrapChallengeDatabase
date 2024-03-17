@@ -85,7 +85,7 @@ namespace ScrapWorker
                 Logger.WaitForExit();
 
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine($"Program Terminated at [{TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.Local)}]");
+                Console.WriteLine($"[{DateTime.Now}] Program Terminated");
                 Console.ResetColor();
             }
         }
@@ -98,6 +98,7 @@ namespace ScrapWorker
             {
                 if (session.steamClient.IsConnected)
                 {
+                    session.SubscribeAll();
                     Logger?.WriteLine("[ReconnectTimer]: Steam client is connected.");
                     ReconnectionTask?.Dispose();
                     ReconnectionTask = null;
