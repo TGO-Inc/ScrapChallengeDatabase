@@ -399,3 +399,4 @@ FodyWeavers.xsd
 priv.password
 priv.key
 webhook.url
+ScrapWorker/JSON/_img2_steamids.json

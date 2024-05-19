@@ -11,6 +11,7 @@
 		<Trimming>full</Trimming>
 		<Deterministic>false</Deterministic>
 		<NeutralLanguage>en</NeutralLanguage>
+		<PublishAot>true</PublishAot>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'" />
