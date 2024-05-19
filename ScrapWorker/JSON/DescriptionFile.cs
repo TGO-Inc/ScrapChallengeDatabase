@@ -10,6 +10,7 @@ namespace ScrapWorker.JSON
         public string type { get; set; }
         public int version { get; set; }
     }
+
     internal class ChallengeList
     {
         public string[] challenges { get; set; } = new string[0];

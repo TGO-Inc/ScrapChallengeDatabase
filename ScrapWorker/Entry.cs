@@ -26,7 +26,6 @@ namespace ScrapWorker
             AppDomain.CurrentDomain.ProcessExit += (sender, e) => Console.WriteLine($"[{DateTime.Now}] Process Exit");
             AppDomain.CurrentDomain.UnhandledException += (sender, e) =>
             {
-                //Console.Error.WriteLine($"Unhandled Exception");
                 if (e.ExceptionObject.GetType().FullName!.Contains("http", StringComparison.InvariantCultureIgnoreCase))
                 {
                     Console.Error.WriteLine($"HTTP Exception. Waiting before continue.");
